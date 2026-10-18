@@ -9,7 +9,7 @@ displayName = "Ban Dream"
 authors = "nins77"
 displayTest = "IGNORE_ALL_VERSION"
 description = '''
-Ban Dream | 封禁之梦
+Ban Dream
 
 Server-side administration for banning items, entities, structures, enchantments,
 dimensions, mob effects and item NBT. Bans support global or per-dimension scope,

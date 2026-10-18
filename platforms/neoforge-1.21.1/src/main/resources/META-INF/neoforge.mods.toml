@@ -1,0 +1,27 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "MIT"
+
+[[mods]]
+modId = "bandream"
+version = "1.2.0"
+displayName = "Ban Dream"
+authors = "nins77"
+description = '''
+Ban Dream - ban management for Minecraft 1.21.1 NeoForge.
+This project is the NeoForge development environment scaffold.
+'''
+
+[[dependencies.bandream]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1.0,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.bandream]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1]"
+ordering = "NONE"
+side = "BOTH"

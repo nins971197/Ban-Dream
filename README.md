@@ -44,6 +44,23 @@ $env:JAVA_HOME = '你的 JDK 17 目录'
 
 产物位于 `build/libs/ban_dream-1.2.0.jar`。
 
+## 多平台开发环境
+
+仓库包含相互独立的平台工程，避免不同版本的 Gradle 和映射工具冲突：
+
+| 平台 | 目录 | Java | Gradle |
+| --- | --- | --- | --- |
+| Forge 1.12.2 | `platforms/forge-1.12.2` | 25 / 8 | 9.6.1 |
+| Cleanroom 1.12.2 | `platforms/cleanroom-1.12.2` | 25 / 8 | 9.8.1 |
+| NeoForge 1.20.1 | `platforms/neoforge-1.20.1` | 17 | 8.14.2 |
+| NeoForge 1.21.1 | `platforms/neoforge-1.21.1` | 21 | 8.14.2 |
+
+Forge 1.12.2 使用提供的 `ForgeDevEnv` 模板，MixinBooter 固定为 `10.7`。
+Cleanroom 当前使用 `0.7.9-alpha`。NeoForge 工程依赖官方
+`maven.neoforged.net`，构建时需要保证该域名可正常访问。
+
+详见 [`platforms/README.md`](platforms/README.md)。
+
 ## 指令
 
 所有指令均需要管理员权限。

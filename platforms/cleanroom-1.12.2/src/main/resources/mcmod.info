@@ -1,0 +1,13 @@
+[
+  {
+    "modid": "bandream",
+    "name": "Ban Dream",
+    "description": "Ban management for Minecraft 1.12.2 Cleanroom. Development environment scaffold.",
+    "version": "${version}",
+    "mcversion": "1.12.2",
+    "authorList": ["nins77"],
+    "credits": "",
+    "url": "",
+    "updateJSON": ""
+  }
+]

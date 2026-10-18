@@ -1,0 +1,66 @@
+plugins {
+    id 'java'
+    id 'com.cleanroommc.cleanroomgradle'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = 'ban_dream-cleanroom-1.12.2'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+repositories {
+    maven {
+        name = 'CleanroomMC'
+        url = 'https://maven.cleanroommc.com'
+    }
+    mavenCentral()
+}
+
+dependencies {
+    implementation cleanroom.userdev(project.cleanroom_version)
+}
+
+cleanroom {
+    runs {
+        client {
+            configure {
+                username = 'Developer'
+            }
+        }
+        server {
+            configure {
+            }
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('mcmod.info') {
+        expand version: project.version
+    }
+}
+
+jar {
+    manifest {
+        attributes(
+            'Specification-Title': 'Ban Dream',
+            'Specification-Vendor': 'nins77',
+            'Implementation-Title': 'Ban Dream',
+            'Implementation-Version': project.version,
+            'Implementation-Vendor': 'nins77'
+        )
+    }
+}
