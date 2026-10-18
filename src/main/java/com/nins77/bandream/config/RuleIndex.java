@@ -9,9 +9,6 @@ import java.util.Map;
 
 import net.minecraft.resources.ResourceLocation;
 
-/**
- * Immutable lookup index for ban or whitelist entries.
- */
 final class RuleIndex {
     private static final RuleIndex EMPTY = new RuleIndex(List.of(), Map.of());
 

@@ -12,14 +12,11 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Mod(BanDream.MOD_ID)
 public final class BanDream {
     public static final String MOD_ID = "bandream";
     public static final String MOD_NAME = "Ban Dream";
-    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAME);
 
     public BanDream() {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -37,8 +34,7 @@ public final class BanDream {
         event.enqueueWork(() -> {
             try {
                 BanRules.load();
-            } catch (Exception exception) {
-                LOGGER.error("Could not load Ban Dream rules", exception);
+            } catch (Exception ignored) {
             }
         });
     }

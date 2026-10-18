@@ -23,7 +23,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonParseException;
 import com.mojang.brigadier.StringReader;
-import com.nins77.bandream.BanDream;
 import net.minecraft.commands.arguments.NbtPathArgument;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -102,8 +101,6 @@ public final class BanRules {
         List<BanEntry> bans = normalizeBans(file.bans);
         List<PlayerWhitelistEntry> players = normalizePlayers(file.playerWhitelist);
         setRules(bans, players);
-        BanDream.LOGGER.info("Loaded {} bans and {} player whitelist entries from {}",
-            bans.size(), players.size(), CONFIG_PATH);
     }
 
     public static synchronized boolean ban(BanEntry entry) throws IOException {
@@ -234,7 +231,6 @@ public final class BanRules {
         List<BanEntry> result = new ArrayList<>();
         for (BanEntry entry : source) {
             if (entry == null || !entry.normalize()) {
-                BanDream.LOGGER.warn("Skipping invalid Ban Dream ban entry: {}", entry);
                 continue;
             }
             if (result.stream().noneMatch(entry::sameKey)) {
@@ -252,7 +248,6 @@ public final class BanRules {
         List<PlayerWhitelistEntry> result = new ArrayList<>();
         for (PlayerWhitelistEntry entry : source) {
             if (entry == null || !entry.normalize()) {
-                BanDream.LOGGER.warn("Skipping invalid player whitelist entry: {}", entry);
                 continue;
             }
             if (result.stream().noneMatch(entry::sameIdentity)) {
@@ -275,7 +270,6 @@ public final class BanRules {
                 try {
                     ids.add(UUID.fromString(entry.uuid));
                 } catch (IllegalArgumentException ignored) {
-                    // normalize() already rejects malformed UUIDs.
                 }
             }
             if (entry.name != null && !entry.name.isBlank()) {
@@ -401,7 +395,6 @@ public final class BanRules {
         try {
             return Optional.of(new NbtPathArgument().parse(new StringReader(value)));
         } catch (Exception ignored) {
-            BanDream.LOGGER.warn("Invalid NBT path in Ban Dream config: {}", value);
             return Optional.empty();
         }
     }

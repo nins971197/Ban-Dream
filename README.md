@@ -61,6 +61,11 @@ Cleanroom 当前使用 `0.7.9-alpha`。NeoForge 工程依赖官方
 
 详见 [`platforms/README.md`](platforms/README.md)。
 
+架构说明和构建记录放在工作区文档中，不进入 JAR：
+
+- [`docs/architecture.md`](docs/architecture.md)
+- [`docs/build-notes.md`](docs/build-notes.md)
+
 ## 指令
 
 所有指令均需要管理员权限。

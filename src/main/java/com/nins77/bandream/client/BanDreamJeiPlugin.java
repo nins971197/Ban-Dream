@@ -83,9 +83,7 @@ public final class BanDreamJeiPlugin implements IModPlugin {
                 Class.forName("mezz.jei.api.ingredients.IIngredientType"),
                 Collection.class);
             method.invoke(ingredientManager, itemStackType, stacks);
-        } catch (ReflectiveOperationException exception) {
-            com.nins77.bandream.BanDream.LOGGER.warn(
-                "Could not update JEI item visibility for {} item(s)", stacks.size(), exception);
+        } catch (ReflectiveOperationException ignored) {
         }
     }
 

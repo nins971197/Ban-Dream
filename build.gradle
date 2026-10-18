@@ -41,8 +41,6 @@ minecraft {
 }
 
 sourceSets {
-    // Compile-only JEI descriptors. These classes are deliberately excluded
-    // from the jar so Ban Dream has no hard JEI dependency.
     jeiStub {
         java.srcDirs = ['src/jeiStub/java']
     }

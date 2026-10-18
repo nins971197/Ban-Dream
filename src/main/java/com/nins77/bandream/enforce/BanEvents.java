@@ -1,6 +1,5 @@
 package com.nins77.bandream.enforce;
 
-import com.nins77.bandream.BanDream;
 import com.nins77.bandream.action.PendingBanManager;
 import com.nins77.bandream.config.BanRules;
 import com.nins77.bandream.config.BanTrigger;
@@ -34,8 +33,7 @@ public final class BanEvents {
     public static void onServerAboutToStart(ServerAboutToStartEvent event) {
         try {
             BanRules.load();
-        } catch (Exception exception) {
-            BanDream.LOGGER.error("Could not load Ban Dream rules", exception);
+        } catch (Exception ignored) {
         }
     }
 

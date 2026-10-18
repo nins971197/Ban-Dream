@@ -39,13 +39,12 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.RegisterCommandsEvent;
 
 public final class BanCommands {
     private static final SimpleCommandExceptionType ERROR_NOT_PLAYER = new SimpleCommandExceptionType(
-        Component.literal("该清单只能由玩家打开或领取"));
+        Component.literal("该指令只能由玩家执行"));
     private static final SimpleCommandExceptionType ERROR_EMPTY_HAND = new SimpleCommandExceptionType(
         Component.literal("主手没有物品，无法执行手持物品封禁"));
     private BanCommands() {
@@ -138,7 +137,7 @@ public final class BanCommands {
         boolean jeiVisible,
         BanTrigger trigger
     ) throws CommandSyntaxException {
-        ServerPlayer player = context.getSource().getPlayerOrException();
+        ServerPlayer player = requirePlayer(context.getSource());
         ItemStack held = player.getMainHandItem();
         if (held.isEmpty()) {
             throw ERROR_EMPTY_HAND.create();
@@ -426,15 +425,15 @@ public final class BanCommands {
     private static int list(CommandSourceStack source, BanType type, boolean book) throws CommandSyntaxException {
         List<BanEntry> entries = BanRules.entries(type);
         if (type == BanType.ITEM) {
-            Player player = source.getPlayerOrException();
-            BanListMenu.open((net.minecraft.server.level.ServerPlayer) player);
+            ServerPlayer player = requirePlayer(source);
+            BanListMenu.open(player);
             source.sendSuccess(() -> Component.literal(
                 "已打开封禁物品列表，共 " + entries.size() + " 条记录")
                 .withStyle(ChatFormatting.AQUA), false);
             return Math.max(1, entries.size());
         }
         if (book) {
-            var player = source.getPlayerOrException();
+            ServerPlayer player = requirePlayer(source);
             List<ItemStack> written = BanBookFactory.createVolumes(type, entries);
             for (ItemStack stack : written) {
                 if (!player.getInventory().add(stack)) {
@@ -478,7 +477,7 @@ public final class BanCommands {
 
     private static int confirmPending(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
-        ServerPlayer player = source.getPlayerOrException();
+        ServerPlayer player = requirePlayer(source);
         PendingBanManager.PendingBan pending = PendingBanManager.get(player);
         if (pending == null) {
             source.sendFailure(Component.literal("没有待确认的封禁，或确认已超过 60 秒"));
@@ -500,7 +499,7 @@ public final class BanCommands {
     }
 
     private static int cancelPending(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer player = context.getSource().getPlayerOrException();
+        ServerPlayer player = requirePlayer(context.getSource());
         PendingBanManager.clear(player);
         context.getSource().sendSuccess(() -> Component.literal("已取消待确认的封禁")
             .withStyle(ChatFormatting.YELLOW), false);
@@ -509,7 +508,7 @@ public final class BanCommands {
 
     private static int giveBanStick(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
-        ServerPlayer player = source.getPlayerOrException();
+        ServerPlayer player = requirePlayer(source);
         ItemStack stack = new ItemStack(BanItems.BAN_STICK.get());
         if (!player.getInventory().add(stack)) {
             player.drop(stack, false);
@@ -568,6 +567,14 @@ public final class BanCommands {
 
     private static BanTrigger parseTrigger(String value) {
         return "use".equals(value.toLowerCase(Locale.ROOT)) ? BanTrigger.USE : BanTrigger.INVENTORY;
+    }
+
+    private static ServerPlayer requirePlayer(CommandSourceStack source) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayer();
+        if (player == null) {
+            throw ERROR_NOT_PLAYER.create();
+        }
+        return player;
     }
 
 }
