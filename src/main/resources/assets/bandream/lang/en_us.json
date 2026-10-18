@@ -1,0 +1,12 @@
+{
+  "bandream.gui.title": "Ban Dream · Banned Items",
+  "bandream.gui.previous": "Previous page",
+  "bandream.gui.next": "Next page",
+  "bandream.gui.close": "Close",
+  "bandream.gui.page": "Page %s / %s",
+  "bandream.gui.empty": "No banned items",
+  "item.bandream.ban_stick": "Ban Stick",
+  "item.bandream.ban_stick.tooltip1": "Left-click a mob to request banning its entity type",
+  "item.bandream.ban_stick.tooltip2": "Sneak left-click a barrel to request banning all contained items",
+  "item.bandream.ban_stick.tooltip3": "Run /bbban confirm within 60 seconds"
+}

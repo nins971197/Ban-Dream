@@ -1,0 +1,12 @@
+{
+  "bandream.gui.title": "封禁之梦 · 物品封禁列表",
+  "bandream.gui.previous": "上一页",
+  "bandream.gui.next": "下一页",
+  "bandream.gui.close": "关闭",
+  "bandream.gui.page": "第 %s / %s 页",
+  "bandream.gui.empty": "没有被封禁的物品",
+  "item.bandream.ban_stick": "封禁棒",
+  "item.bandream.ban_stick.tooltip1": "左键生物：请求确认后封禁该生物类型",
+  "item.bandream.ban_stick.tooltip2": "潜行左键木桶：请求确认后封禁桶内全部物品",
+  "item.bandream.ban_stick.tooltip3": "输入 /bbban confirm 确认，60 秒内有效"
+}

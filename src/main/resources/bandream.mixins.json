@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.nins77.bandream.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "bandream.refmap.json",
+  "mixins": [
+    "StructureStartMixin"
+  ],
+  "client": [],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

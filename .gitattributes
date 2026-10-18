@@ -1,0 +1,18 @@
+* text=auto
+
+*.java text eol=lf
+*.gradle text eol=lf
+*.properties text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.toml text eol=lf
+*.mcmeta text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+.gitattributes text eol=lf
+.gitignore text eol=lf
+gradlew text eol=lf
+gradlew.bat text eol=crlf
+gradle-wrapper.jar binary
+*.jar binary
+*.png binary

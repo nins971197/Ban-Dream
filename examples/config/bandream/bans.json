@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "_comment": "Ban Dream example. Copy this file to config/bandream/bans.json. These entries are examples, not recommended defaults.",
+  "playerWhitelist": [],
+  "bans": [
+    {
+      "type": "ITEM",
+      "id": "minecraft:tnt",
+      "scope": "GLOBAL",
+      "jeiVisible": false,
+      "trigger": "INVENTORY"
+    },
+    {
+      "type": "item",
+      "id": "minecraft:diamond_sword",
+      "scope": "dimension",
+      "dimension": "minecraft:the_nether",
+      "jeiVisible": true,
+      "trigger": "use"
+    },
+    {
+      "type": "entity",
+      "id": "minecraft:creeper",
+      "scope": "global"
+    },
+    {
+      "type": "structure",
+      "id": "minecraft:village_plains",
+      "scope": "dimension",
+      "dimension": "minecraft:overworld"
+    },
+    {
+      "type": "enchantment",
+      "id": "minecraft:mending",
+      "scope": "global"
+    },
+    {
+      "type": "dimension",
+      "id": "minecraft:the_end",
+      "scope": "global"
+    },
+    {
+      "type": "effect",
+      "id": "minecraft:blindness",
+      "scope": "global"
+    },
+    {
+      "type": "nbt",
+      "id": "minecraft:stick",
+      "scope": "global",
+      "trigger": "inventory",
+      "path": "CustomModelData",
+      "value": "777"
+    },
+    {
+      "type": "nbt",
+      "id": "*",
+      "scope": "dimension",
+      "dimension": "minecraft:overworld",
+      "trigger": "use",
+      "path": "display.Name",
+      "value": "\"Server Blocked\""
+    }
+  ]
+}

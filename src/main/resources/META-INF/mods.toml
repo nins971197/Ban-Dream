@@ -1,0 +1,54 @@
+modLoader = "javafml"
+loaderVersion = "[47,)"
+license = "MIT"
+
+[[mods]]
+modId = "bandream"
+version = "${file.jarVersion}"
+displayName = "Ban Dream"
+authors = "nins77"
+displayTest = "IGNORE_ALL_VERSION"
+description = '''
+Ban Dream | 封禁之梦
+
+Server-side administration for banning items, entities, structures, enchantments,
+dimensions, mob effects and item NBT. Bans support global or per-dimension scope,
+an optional paginated item browser, written-book exports and editable JSON config.
+A Ban Stick provides click-to-confirm banning for mobs and barrel contents.
+Player whitelist entries exempt selected players from player-facing restrictions.
+
+Commands:
+/bbban ban ...    create or update a ban
+/bbban unban ...  remove bans
+/bbban list ...   list bans, or open the item browser
+/bbban whitelist ... manage exempt players
+/bbban stick      obtain the Ban Stick
+/bbban confirm    confirm a Ban Stick target
+/bbban reload     reload config/bandream/bans.json
+
+Requires permission level 3 (administrator).
+'''
+
+[[dependencies.bandream]]
+modId = "forge"
+mandatory = true
+versionRange = "[47,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.bandream]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.20.1]"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.bandream]]
+modId = "jei"
+mandatory = false
+versionRange = "[15,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[mixins]]
+config = "bandream.mixins.json"
