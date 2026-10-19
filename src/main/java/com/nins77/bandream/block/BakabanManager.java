@@ -31,6 +31,7 @@ public final class BakabanManager {
     private static final Map<ResourceKey<Level>, Set<Long>> LOADED_CHUNKS = new HashMap<>();
     private static final Map<ResourceKey<Level>, Deque<ChunkScan>> SCAN_QUEUE = new HashMap<>();
     private static final Map<ResourceKey<Level>, Set<Long>> QUEUED = new HashMap<>();
+    private static boolean suppressingContainerDrops;
 
     private BakabanManager() {
     }
@@ -39,6 +40,7 @@ public final class BakabanManager {
         LOADED_CHUNKS.clear();
         SCAN_QUEUE.clear();
         QUEUED.clear();
+        suppressingContainerDrops = false;
     }
 
     public static void onChunkLoad(ServerLevel level, ChunkPos pos) {
@@ -142,11 +144,15 @@ public final class BakabanManager {
         }
         BakabanSavedData data = BakabanSavedData.get(level);
         data.put(pos, state, blockEntity);
-        if (!level.setBlock(pos, BanBlocks.BAKABAN.get().defaultBlockState(), Block.UPDATE_ALL)) {
+        if (!setBlockWithoutContainerDrops(level, pos, BanBlocks.BAKABAN.get().defaultBlockState())) {
             data.remove(pos);
             return false;
         }
         return true;
+    }
+
+    public static boolean suppressesContainerDrops(Level level) {
+        return suppressingContainerDrops && !level.isClientSide();
     }
 
     public static boolean restore(Level level, BlockPos pos, Player player) {
@@ -182,7 +188,7 @@ public final class BakabanManager {
             }
             return false;
         }
-        if (!level.setBlock(pos, stored.state(), Block.UPDATE_ALL)) {
+        if (!setBlockWithoutContainerDrops(level, pos, stored.state())) {
             return false;
         }
         boolean loaded = true;
@@ -200,7 +206,7 @@ public final class BakabanManager {
             }
         }
         if (!loaded) {
-            level.setBlock(pos, BanBlocks.BAKABAN.get().defaultBlockState(), Block.UPDATE_ALL);
+            setBlockWithoutContainerDrops(level, pos, BanBlocks.BAKABAN.get().defaultBlockState());
             if (player != null) {
                 BanEnforcement.notify(player, "原方块内容无法完整恢复，已保留数据");
             }
@@ -211,6 +217,16 @@ public final class BakabanManager {
             BanEnforcement.notify(player, "已恢复原方块");
         }
         return true;
+    }
+
+    private static boolean setBlockWithoutContainerDrops(ServerLevel level, BlockPos pos, BlockState state) {
+        boolean previous = suppressingContainerDrops;
+        suppressingContainerDrops = true;
+        try {
+            return level.setBlock(pos, state, Block.UPDATE_ALL);
+        } finally {
+            suppressingContainerDrops = previous;
+        }
     }
 
     private static boolean processChunk(

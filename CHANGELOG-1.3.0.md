@@ -4,6 +4,8 @@
 - Added `/bbban ban block`.
 - Ban Stick left-click now selects blocks for confirmation.
 - Block bans now redirect protected blocks to `bandream:bakaban`.
+- Redirecting a container block no longer drops its stored items.
+- Added a stack limit of one to the restricted block item.
 - Block bans no longer use separate interaction/full modes; they support global or per-dimension scope.
 - Banned blocks reject hopper and Forge-capability item input/output.
 - Banned containers and pipes no longer exchange items after rules change.

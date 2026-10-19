@@ -18,7 +18,8 @@ public final class BanItems {
     public static final RegistryObject<Item> BAN_STICK =
         ITEMS.register("ban_stick", BanStickItem::new);
     public static final RegistryObject<Item> BAKABAN =
-        ITEMS.register("bakaban", () -> new BlockItem(BanBlocks.BAKABAN.get(), new Item.Properties()));
+        ITEMS.register("bakaban",
+            () -> new BlockItem(BanBlocks.BAKABAN.get(), new Item.Properties().stacksTo(1)));
 
     private BanItems() {
     }
