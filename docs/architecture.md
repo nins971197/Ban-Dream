@@ -58,6 +58,14 @@ Item movement is blocked at three layers:
 The item-handler guard applies to both block modes and to global or matching-dimension
 rules. It is a world-level rule and does not consult the player whitelist.
 
+## Performance guards
+
+Rule types with no entries are skipped before registry and index work. Player inventory
+scans run every five ticks, while item pickup triggers an immediate scan. Effect checks
+run every twenty ticks, Curios checks run with the ten-tick full check, and block or
+structure events exit before registry lookup when their rule type is empty. Hopper ticks
+check only the source, self and actual output side.
+
 ## Ban Stick actions
 
 `PendingActionManager` stores one short-lived action per player. The server sends an

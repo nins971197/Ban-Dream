@@ -22,7 +22,8 @@ public final class BlockBanEvents {
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
-        if (event.getLevel().isClientSide() || !(event.getEntity() instanceof ServerPlayer player)
+        if (!BanRules.hasBlockRules() || event.getLevel().isClientSide()
+            || !(event.getEntity() instanceof ServerPlayer player)
             || BanRules.isPlayerWhitelisted(player)) {
             return;
         }
@@ -43,7 +44,8 @@ public final class BlockBanEvents {
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
-        if (event.getLevel().isClientSide() || !(event.getEntity() instanceof ServerPlayer player)
+        if (!BanRules.hasBlockRules() || event.getLevel().isClientSide()
+            || !(event.getEntity() instanceof ServerPlayer player)
             || BanRules.isPlayerWhitelisted(player)) {
             return;
         }
@@ -58,7 +60,8 @@ public final class BlockBanEvents {
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onBreak(BlockEvent.BreakEvent event) {
-        if (!(event.getPlayer() instanceof ServerPlayer player) || BanRules.isPlayerWhitelisted(player)) {
+        if (!BanRules.hasBlockRules() || !(event.getPlayer() instanceof ServerPlayer player)
+            || BanRules.isPlayerWhitelisted(player)) {
             return;
         }
         ResourceLocation id = BuiltInRegistries.BLOCK.getKey(event.getState().getBlock());
@@ -70,7 +73,8 @@ public final class BlockBanEvents {
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onPlace(BlockEvent.EntityPlaceEvent event) {
-        if (event.getLevel().isClientSide() || !(event.getLevel() instanceof Level level)) {
+        if (!BanRules.hasBlockRules() || event.getLevel().isClientSide()
+            || !(event.getLevel() instanceof Level level)) {
             return;
         }
         if (event.getEntity() instanceof Player player && BanRules.isPlayerWhitelisted(player)) {

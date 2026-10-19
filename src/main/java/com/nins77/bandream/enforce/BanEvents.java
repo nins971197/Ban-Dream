@@ -47,11 +47,14 @@ public final class BanEvents {
         }
         ResourceLocation dimension = player.level().dimension().location();
         if (BanRules.isDimensionBanned(dimension)) {
-            BanEnforcement.escapeBannedDimension(player);
-            return;
+            if (player.tickCount % 10 == 0) {
+                BanEnforcement.escapeBannedDimension(player);
+            }
         }
         boolean fullCheck = player.tickCount % 10 == 0;
-        if (BanRules.hasItemRules(BanTrigger.INVENTORY)
+        boolean inventoryCheck = BanRules.hasItemRules(BanTrigger.INVENTORY)
+            && player.tickCount % 5 == 0;
+        if (inventoryCheck
             || (fullCheck && (BanRules.hasItemRules(BanTrigger.USE) || BanRules.hasEnchantmentRules()))) {
             BanEnforcement.enforcePlayer(player, fullCheck);
         }
@@ -67,7 +70,8 @@ public final class BanEvents {
 
     @SubscribeEvent
     public static void onEntityJoin(EntityJoinLevelEvent event) {
-        if (event.getLevel().isClientSide() || event.getEntity() instanceof Player) {
+        if (!BanRules.hasEntityRules() || event.getLevel().isClientSide()
+            || event.getEntity() instanceof Player) {
             return;
         }
         Entity entity = event.getEntity();
@@ -95,6 +99,9 @@ public final class BanEvents {
 
     @SubscribeEvent
     public static void onEffectAdded(MobEffectEvent.Added event) {
+        if (!BanRules.hasEffectRules()) {
+            return;
+        }
         LivingEntity entity = event.getEntity();
         MobEffectInstance effect = event.getEffectInstance();
         if (entity instanceof Player player && BanRules.isPlayerWhitelisted(player)) {

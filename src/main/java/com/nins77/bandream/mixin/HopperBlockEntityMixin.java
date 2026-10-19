@@ -2,11 +2,13 @@ package com.nins77.bandream.mixin;
 
 import com.nins77.bandream.enforce.BlockBanSupport;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.Container;
 import net.minecraft.world.level.block.entity.Hopper;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
+import net.minecraft.world.level.block.HopperBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -24,7 +26,10 @@ public abstract class HopperBlockEntityMixin {
         HopperBlockEntity hopper,
         CallbackInfo callback
     ) {
-        if (blocked(level, pos) || blocked(level, pos.above()) || blocked(level, pos.below())) {
+        Direction facing = state.getValue(HopperBlock.FACING);
+        BlockPos destination = pos.relative(facing);
+        if (blocked(level, pos) || blocked(level, pos.above())
+            || (!destination.equals(pos.above()) && blocked(level, destination))) {
             callback.cancel();
         }
     }

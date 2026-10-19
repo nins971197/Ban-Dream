@@ -27,6 +27,9 @@ public abstract class StructureStartMixin {
         ChunkPos chunkPos,
         CallbackInfo callback
     ) {
+        if (!BanRules.hasStructureRules()) {
+            return;
+        }
         StructureStart self = (StructureStart) (Object) this;
         ResourceLocation structureId = level.registryAccess()
             .registryOrThrow(Registries.STRUCTURE)

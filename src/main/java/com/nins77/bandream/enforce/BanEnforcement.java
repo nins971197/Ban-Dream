@@ -68,7 +68,7 @@ public final class BanEnforcement {
             changed |= CuriosCompat.enforce(player, dimension, scanCuriosItems, scanEnchantments);
         }
 
-        if (BanRules.hasEffectRules()) {
+        if (fullCheck && BanRules.hasEffectRules()) {
             for (MobEffectInstance effect : new ArrayList<>(player.getActiveEffects())) {
                 if (BanRules.isEffectBanned(effect.getEffect(), dimension)) {
                     player.removeEffect(effect.getEffect());

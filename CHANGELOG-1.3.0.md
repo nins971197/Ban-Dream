@@ -22,6 +22,10 @@
 - Preserved JEI visibility when changing an item ban mode.
 - Guarded client choice packets during disconnects and deduplicated entity right-click events.
 - Refreshed Curios stacks after item removal or enchantment cleanup.
+- Added rule-type fast paths for entities, structures, dimensions, effects and enchantments.
+- Reduced inventory scans to every five ticks while keeping item pickup handling immediate.
+- Added early exits for block and structure events when no matching rule type exists.
+- Corrected hopper tick checks to inspect the actual output side.
 - Renamed all user-facing mod titles to Ban Dream.
 - Removed Java logging calls and explanatory comments from packaged sources.
 - Moved architecture and build notes into the workspace `docs` directory.

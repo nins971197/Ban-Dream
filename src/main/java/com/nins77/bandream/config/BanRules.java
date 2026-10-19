@@ -78,6 +78,8 @@ public final class BanRules {
     private static volatile boolean hasEntityRules;
     private static volatile boolean hasNbtRules;
     private static volatile boolean hasBlockRules;
+    private static volatile boolean hasStructureRules;
+    private static volatile boolean hasDimensionRules;
     private static final Map<String, Optional<NbtPathArgument.NbtPath>> PATH_CACHE = new ConcurrentHashMap<>();
     private static final Map<String, Optional<Tag>> VALUE_CACHE = new ConcurrentHashMap<>();
 
@@ -85,6 +87,8 @@ public final class BanRules {
     }
 
     public static synchronized void load() throws IOException {
+        PATH_CACHE.clear();
+        VALUE_CACHE.clear();
         Files.createDirectories(CONFIG_PATH.getParent());
         if (Files.notExists(CONFIG_PATH)) {
             writeConfig(List.of(), List.of());
@@ -184,6 +188,9 @@ public final class BanRules {
         if (whitelistedPlayerIds.contains(player.getUUID())) {
             return true;
         }
+        if (whitelistedPlayerNames.isEmpty()) {
+            return false;
+        }
         return whitelistedPlayerNames.contains(player.getGameProfile().getName().toLowerCase(Locale.ROOT));
     }
 
@@ -208,10 +215,15 @@ public final class BanRules {
 
     private static List<BanEntry> withReplacement(List<BanEntry> existing, List<BanEntry> additions) {
         List<BanEntry> next = new ArrayList<>(existing);
+        Set<RuleKey> additionKeys = new HashSet<>();
+        List<BanEntry> uniqueAdditions = new ArrayList<>(additions.size());
         for (BanEntry addition : additions) {
-            next.removeIf(rule -> rule.sameKey(addition));
-            next.add(addition);
+            if (additionKeys.add(key(addition))) {
+                uniqueAdditions.add(addition);
+            }
         }
+        next.removeIf(rule -> additionKeys.contains(key(rule)));
+        next.addAll(uniqueAdditions);
         next.sort(ORDER);
         return next;
     }
@@ -232,11 +244,12 @@ public final class BanRules {
             return List.of();
         }
         List<BanEntry> result = new ArrayList<>();
+        Set<RuleKey> keys = new HashSet<>();
         for (BanEntry entry : source) {
             if (entry == null || !entry.normalize()) {
                 continue;
             }
-            if (result.stream().noneMatch(entry::sameKey)) {
+            if (keys.add(key(entry))) {
                 result.add(entry);
             }
         }
@@ -283,21 +296,52 @@ public final class BanRules {
         whitelistedPlayerNames = Set.copyOf(names);
 
         Set<String> hidden = new HashSet<>();
+        boolean inventoryRules = false;
+        boolean useRules = false;
+        boolean enchantmentRules = false;
+        boolean effectRules = false;
+        boolean entityRules = false;
+        boolean nbtRules = false;
+        boolean blockRules = false;
+        boolean structureRules = false;
+        boolean dimensionRules = false;
         for (BanEntry entry : bans) {
             if (entry.type == BanType.ITEM && Boolean.FALSE.equals(entry.jeiVisible)) {
                 hidden.add(entry.id);
             }
+            if (entry.type == BanType.ITEM || entry.type == BanType.NBT) {
+                if (entry.trigger == BanTrigger.INVENTORY) {
+                    inventoryRules = true;
+                } else if (entry.trigger == BanTrigger.USE) {
+                    useRules = true;
+                }
+            }
+            if (entry.type == BanType.ENCHANTMENT) {
+                enchantmentRules = true;
+            } else if (entry.type == BanType.EFFECT) {
+                effectRules = true;
+            } else if (entry.type == BanType.ENTITY) {
+                entityRules = true;
+            } else if (entry.type == BanType.NBT) {
+                nbtRules = true;
+            } else if (entry.type == BanType.BLOCK) {
+                blockRules = true;
+            } else if (entry.type == BanType.STRUCTURE) {
+                structureRules = true;
+            } else if (entry.type == BanType.DIMENSION) {
+                dimensionRules = true;
+            }
         }
         hiddenJeiItems = Set.copyOf(hidden);
-        hasInventoryItemRules = bans.stream().anyMatch(entry ->
-            (entry.type == BanType.ITEM || entry.type == BanType.NBT) && entry.trigger == BanTrigger.INVENTORY);
-        hasUseItemRules = bans.stream().anyMatch(entry ->
-            (entry.type == BanType.ITEM || entry.type == BanType.NBT) && entry.trigger == BanTrigger.USE);
-        hasEnchantmentRules = bans.stream().anyMatch(entry -> entry.type == BanType.ENCHANTMENT);
-        hasEffectRules = bans.stream().anyMatch(entry -> entry.type == BanType.EFFECT);
-        hasEntityRules = bans.stream().anyMatch(entry -> entry.type == BanType.ENTITY);
-        hasNbtRules = bans.stream().anyMatch(entry -> entry.type == BanType.NBT);
-        hasBlockRules = bans.stream().anyMatch(entry -> entry.type == BanType.BLOCK);
+        hasInventoryItemRules = inventoryRules;
+        hasUseItemRules = useRules;
+        hasEnchantmentRules = enchantmentRules;
+        hasEffectRules = effectRules;
+        hasEntityRules = entityRules;
+        hasNbtRules = nbtRules;
+        hasBlockRules = blockRules;
+        hasStructureRules = structureRules;
+        hasDimensionRules = dimensionRules;
     }
 
     private static void writeConfig(List<BanEntry> bans, List<PlayerWhitelistEntry> players) throws IOException {
@@ -313,6 +357,16 @@ public final class BanRules {
         } catch (AtomicMoveNotSupportedException ignored) {
             Files.move(temporary, CONFIG_PATH, StandardCopyOption.REPLACE_EXISTING);
         }
+    }
+
+    private static RuleKey key(BanEntry entry) {
+        return new RuleKey(
+            entry.type,
+            entry.id,
+            entry.scope,
+            entry.dimension == null ? "" : entry.dimension,
+            entry.path == null ? "" : entry.path,
+            entry.value == null ? "" : entry.value);
     }
 
     public static List<BanEntry> entries() {
@@ -348,9 +402,13 @@ public final class BanRules {
             }
         }
         if (hasNbtRules) {
-            List<BanEntry> nbtCandidates = new ArrayList<>(banIndex.candidates(BanType.NBT, id));
-            nbtCandidates.addAll(banIndex.candidates(BanType.NBT, "*"));
-            for (BanEntry entry : nbtCandidates) {
+            for (BanEntry entry : banIndex.candidates(BanType.NBT, id)) {
+                if (entry.matchesScope(dimension) && entry.trigger == trigger
+                    && matchesNbtEntry(entry, stack, itemId)) {
+                    return Optional.of(entry);
+                }
+            }
+            for (BanEntry entry : banIndex.candidates(BanType.NBT, "*")) {
                 if (entry.matchesScope(dimension) && entry.trigger == trigger
                     && matchesNbtEntry(entry, stack, itemId)) {
                     return Optional.of(entry);
@@ -408,10 +466,16 @@ public final class BanRules {
     }
 
     public static boolean isEntityBanned(ResourceLocation entityId, ResourceLocation dimension) {
+        if (!hasEntityRules) {
+            return false;
+        }
         return banIndex.matches(BanType.ENTITY, entityId.toString(), dimension);
     }
 
     public static boolean isStructureBanned(ResourceLocation structureId, ResourceLocation dimension) {
+        if (!hasStructureRules) {
+            return false;
+        }
         return banIndex.matches(BanType.STRUCTURE, structureId.toString(), dimension);
     }
 
@@ -421,6 +485,9 @@ public final class BanRules {
     }
 
     public static boolean isEnchantmentBanned(String id, ResourceLocation dimension) {
+        if (!hasEnchantmentRules) {
+            return false;
+        }
         return banIndex.matches(BanType.ENCHANTMENT, id, dimension);
     }
 
@@ -430,10 +497,16 @@ public final class BanRules {
     }
 
     public static boolean isEffectBanned(String id, ResourceLocation dimension) {
+        if (!hasEffectRules) {
+            return false;
+        }
         return banIndex.matches(BanType.EFFECT, id, dimension);
     }
 
     public static boolean isDimensionBanned(ResourceLocation dimension) {
+        if (!hasDimensionRules) {
+            return false;
+        }
         return banIndex.matches(BanType.DIMENSION, dimension.toString(), dimension);
     }
 
@@ -478,6 +551,14 @@ public final class BanRules {
         return hasEntityRules;
     }
 
+    public static boolean hasStructureRules() {
+        return hasStructureRules;
+    }
+
+    public static boolean hasDimensionRules() {
+        return hasDimensionRules;
+    }
+
     public static Set<String> hiddenJeiItems() {
         return hiddenJeiItems;
     }
@@ -494,6 +575,9 @@ public final class BanRules {
     }
 
     public record RuleGroup(String id, List<BanEntry> entries) {
+    }
+
+    private record RuleKey(BanType type, String id, BanScope scope, String dimension, String path, String value) {
     }
 
     private static final class BanConfigFile {
