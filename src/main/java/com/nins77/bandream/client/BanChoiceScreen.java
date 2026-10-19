@@ -5,6 +5,7 @@ import java.util.List;
 import com.nins77.bandream.network.BanNetwork;
 import com.nins77.bandream.network.ChoiceLayout;
 import com.nins77.bandream.network.OpenChoicePacket;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -83,7 +84,7 @@ public final class BanChoiceScreen extends Screen {
     @Override
     public void onClose() {
         if (!responded) {
-            BanNetwork.sendAction(actionId, -1);
+            sendAction(-1);
         }
         super.onClose();
     }
@@ -95,7 +96,13 @@ public final class BanChoiceScreen extends Screen {
 
     private void choose(int option) {
         responded = true;
-        BanNetwork.sendAction(actionId, option);
+        sendAction(option);
         onClose();
+    }
+
+    private void sendAction(int choice) {
+        if (Minecraft.getInstance().getConnection() != null) {
+            BanNetwork.sendAction(actionId, choice);
+        }
     }
 }

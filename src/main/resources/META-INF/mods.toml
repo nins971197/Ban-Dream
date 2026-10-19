@@ -53,7 +53,7 @@ side = "BOTH"
 [[dependencies.bandream]]
 modId = "curios"
 mandatory = false
-versionRange = "[5.0.0,)"
+versionRange = "[5.10.0,)"
 ordering = "AFTER"
 side = "BOTH"
 

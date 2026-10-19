@@ -18,6 +18,10 @@
 - Sneak right-clicking a barrel globally unbans all contained item IDs immediately.
 - Item and block list entries now open a management panel for mode changes or unbans.
 - Added optional Curios support for removing banned items from equipped curio slots.
+- Restricted list entry management to left-click and closed the old list container first.
+- Preserved JEI visibility when changing an item ban mode.
+- Guarded client choice packets during disconnects and deduplicated entity right-click events.
+- Refreshed Curios stacks after item removal or enchantment cleanup.
 - Renamed all user-facing mod titles to Ban Dream.
 - Removed Java logging calls and explanatory comments from packaged sources.
 - Moved architecture and build notes into the workspace `docs` directory.

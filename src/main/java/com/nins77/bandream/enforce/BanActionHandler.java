@@ -179,7 +179,9 @@ public final class BanActionHandler {
         String dimension = dimension(player, scope);
         List<BanEntry> entries = new ArrayList<>(action.ids().size());
         for (String id : action.ids()) {
-            entries.add(itemEntry(id, scope, dimension, trigger));
+            BanEntry entry = itemEntry(id, scope, dimension, trigger);
+            entry.jeiVisible = !BanRules.hiddenJeiItems().contains(id);
+            entries.add(entry);
         }
         BanRules.banAll(entries);
         BanEnforcement.afterRulesChanged(player.server, false, false);
@@ -230,20 +232,11 @@ public final class BanActionHandler {
         if (action.type() == BanType.ITEM) {
             BanTrigger trigger = choice == 0 ? BanTrigger.USE : BanTrigger.INVENTORY;
             BanEntry entry = itemEntry(id, BanScope.GLOBAL, null, trigger);
-            entry.jeiVisible = preserveJeiVisibility(id);
+            entry.jeiVisible = !BanRules.hiddenJeiItems().contains(id);
             BanRules.ban(entry);
             BanEnforcement.afterRulesChanged(player.server, false, false);
             BanEnforcement.notify(player, "已设置物品 " + id + "：" + BanText.trigger(entry));
         }
-    }
-
-    private static boolean preserveJeiVisibility(String id) {
-        for (BanEntry entry : BanRules.entries(BanType.ITEM)) {
-            if (entry.id.equals(id) && Boolean.FALSE.equals(entry.jeiVisible)) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private static BanEntry blockEntry(String id, BanScope scope, String dimension, BlockBanMode mode) {

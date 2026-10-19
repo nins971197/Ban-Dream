@@ -234,7 +234,8 @@ public final class BanListMenu extends AbstractContainerMenu {
             return;
         }
         if (slotId >= 0 && slotId < CONTAINER_SLOTS) {
-            if (slotId < CONTENT_SLOTS && player instanceof ServerPlayer serverPlayer) {
+            if (slotId < CONTENT_SLOTS && button == 0 && clickType == ClickType.PICKUP
+                && player instanceof ServerPlayer serverPlayer) {
                 int groupIndex = page * CONTENT_SLOTS + slotId;
                 if (groupIndex < groups.size()) {
                     openEntryChoice(serverPlayer, groups.get(groupIndex));
@@ -252,6 +253,7 @@ public final class BanListMenu extends AbstractContainerMenu {
         List<String> options = type == BanType.BLOCK
             ? List.of("禁止交互（全局）", "直接禁止（全局）", "解封")
             : List.of("禁止使用/交互（全局）", "直接禁止（全局）", "解封");
+        player.closeContainer();
         int actionId = PendingActionManager.offer(
             player, PendingActionManager.Kind.LIST_ENTRY, type, List.of(group.id()));
         BanNetwork.sendChoice(player, actionId, "管理" + BanText.typeLabel(type),
