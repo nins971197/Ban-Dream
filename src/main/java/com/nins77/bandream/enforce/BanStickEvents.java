@@ -7,11 +7,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.nins77.bandream.config.BanRules;
 import com.nins77.bandream.config.BanType;
 import com.nins77.bandream.item.BanItems;
 import net.minecraft.commands.Commands;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -52,12 +51,12 @@ public final class BanStickEvents {
         if (!(event.getTarget() instanceof LivingEntity living)) {
             return;
         }
-        ResourceLocation type = BuiltInRegistries.ENTITY_TYPE.getKey(living.getType());
-        if (type == null) {
+        String type = BanRules.entityId(living.getType());
+        if (type.isEmpty()) {
             BanEnforcement.notify(player, "无法读取该生物的类型");
             return;
         }
-        BanActionHandler.openEntityOptions(player, type.toString(), living.getDisplayName().getString());
+        BanActionHandler.openEntityOptions(player, type, living.getDisplayName().getString());
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -87,12 +86,12 @@ public final class BanStickEvents {
             return;
         }
 
-        ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-        if (blockId == null) {
+        String blockId = BanRules.blockId(state.getBlock());
+        if (blockId.isEmpty()) {
             BanEnforcement.notify(player, "无法读取该方块的类型");
             return;
         }
-        BanActionHandler.openBlockOptions(player, blockId.toString(), state.getBlock().getName().getString());
+        BanActionHandler.openBlockOptions(player, blockId, state.getBlock().getName().getString());
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -122,12 +121,12 @@ public final class BanStickEvents {
             return;
         }
 
-        ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-        if (blockId == null) {
+        String blockId = BanRules.blockId(state.getBlock());
+        if (blockId.isEmpty()) {
             BanEnforcement.notify(player, "无法读取该方块的类型");
             return;
         }
-        BanActionHandler.openUnbanConfirm(player, BanType.BLOCK, blockId.toString(),
+        BanActionHandler.openUnbanConfirm(player, BanType.BLOCK, blockId,
             state.getBlock().getName().getString());
     }
 
@@ -178,27 +177,27 @@ public final class BanStickEvents {
         if (previous != null && previous == player.tickCount) {
             return;
         }
-        ResourceLocation type = BuiltInRegistries.ENTITY_TYPE.getKey(living.getType());
-        if (type == null) {
+        String type = BanRules.entityId(living.getType());
+        if (type.isEmpty()) {
             BanEnforcement.notify(player, "无法读取该生物的类型");
             return;
         }
-        BanActionHandler.openUnbanConfirm(player, BanType.ENTITY, type.toString(),
+        BanActionHandler.openUnbanConfirm(player, BanType.ENTITY, type,
             living.getDisplayName().getString());
     }
 
     private static List<String> collectItemIds(BarrelBlockEntity barrel) {
-        Set<ResourceLocation> itemIds = new LinkedHashSet<>();
+        Set<String> itemIds = new LinkedHashSet<>();
         for (int slot = 0; slot < barrel.getContainerSize(); slot++) {
             ItemStack stack = barrel.getItem(slot);
             if (!stack.isEmpty()) {
-                ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
-                if (id != null) {
+                String id = BanRules.itemId(stack.getItem());
+                if (!id.isEmpty()) {
                     itemIds.add(id);
                 }
             }
         }
-        return itemIds.stream().map(ResourceLocation::toString).toList();
+        return List.copyOf(itemIds);
     }
 
     private static boolean isBanStick(ItemStack stack) {

@@ -73,6 +73,7 @@ Cleanroom 当前使用 `0.7.9-alpha`。NeoForge 工程依赖官方
 
 - [`docs/architecture.md`](docs/architecture.md)
 - [`docs/build-notes.md`](docs/build-notes.md)
+- [`docs/performance.md`](docs/performance.md)
 
 ## 指令
 

@@ -68,7 +68,7 @@ public final class BanEnforcement {
             changed |= CuriosCompat.enforce(player, dimension, scanCuriosItems, scanEnchantments);
         }
 
-        if (fullCheck && BanRules.hasEffectRules()) {
+        if (fullCheck && BanRules.hasEffectRules() && !player.getActiveEffects().isEmpty()) {
             for (MobEffectInstance effect : new ArrayList<>(player.getActiveEffects())) {
                 if (BanRules.isEffectBanned(effect.getEffect(), dimension)) {
                     player.removeEffect(effect.getEffect());
@@ -181,6 +181,9 @@ public final class BanEnforcement {
         if (entity.level().isClientSide || !BanRules.hasEffectRules()) {
             return;
         }
+        if (entity.getActiveEffects().isEmpty()) {
+            return;
+        }
         if (entity instanceof Player player && BanRules.isPlayerWhitelisted(player)) {
             return;
         }
@@ -254,10 +257,8 @@ public final class BanEnforcement {
                 List<Entity> entities = new ArrayList<>();
                 level.getAllEntities().forEach(entities::add);
                 for (Entity entity : entities) {
-                    ResourceLocation type =
-                        net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
-                    if (type != null && !(entity instanceof Player)
-                        && BanRules.isEntityBanned(type, level.dimension().location())) {
+                    if (!(entity instanceof Player)
+                        && BanRules.isEntityBanned(entity.getType(), level.dimension().location())) {
                         entity.discard();
                     }
                 }

@@ -126,6 +126,10 @@ public final class BanEntry {
         return isGlobal() || Objects.equals(dimension, currentDimension.toString());
     }
 
+    public boolean matchesScope(String currentDimension) {
+        return isGlobal() || Objects.equals(dimension, currentDimension);
+    }
+
     public boolean sameKey(BanEntry other) {
         if (type != other.type || !id.equals(other.id)
             || scope != other.scope || !Objects.equals(dimension, other.dimension)) {

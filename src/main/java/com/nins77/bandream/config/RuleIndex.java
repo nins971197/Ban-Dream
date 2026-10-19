@@ -55,8 +55,9 @@ final class RuleIndex {
     }
 
     boolean matches(BanType type, String id, ResourceLocation dimension) {
+        String dimensionId = BanRules.dimensionId(dimension);
         for (BanEntry entry : candidates(type, id)) {
-            if (entry.matchesScope(dimension)) {
+            if (entry.matchesScope(dimensionId)) {
                 return true;
             }
         }

@@ -63,7 +63,8 @@ public final class BanEvents {
     @SubscribeEvent
     public static void onLivingTick(LivingEvent.LivingTickEvent event) {
         LivingEntity entity = event.getEntity();
-        if (!entity.level().isClientSide && BanRules.hasEffectRules() && entity.tickCount % 20 == 0) {
+        if (!entity.level().isClientSide && BanRules.hasEffectRules()
+            && entity.tickCount % 20 == 0 && !entity.getActiveEffects().isEmpty()) {
             BanEnforcement.enforceLivingEffects(entity);
         }
     }
@@ -75,8 +76,7 @@ public final class BanEvents {
             return;
         }
         Entity entity = event.getEntity();
-        ResourceLocation id = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
-        if (id != null && BanRules.isEntityBanned(id, event.getLevel().dimension().location())) {
+        if (BanRules.isEntityBanned(entity.getType(), event.getLevel().dimension().location())) {
             event.setCanceled(true);
         }
     }

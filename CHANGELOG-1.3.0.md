@@ -26,6 +26,7 @@
 - Reduced inventory scans to every five ticks while keeping item pickup handling immediate.
 - Added early exits for block and structure events when no matching rule type exists.
 - Corrected hopper tick checks to inspect the actual output side.
+- Cached item, block, entity and dimension IDs for hot-path rule lookups.
 - Renamed all user-facing mod titles to Ban Dream.
 - Removed Java logging calls and explanatory comments from packaged sources.
 - Moved architecture and build notes into the workspace `docs` directory.

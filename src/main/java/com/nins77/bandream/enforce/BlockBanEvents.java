@@ -4,8 +4,6 @@ import java.util.Optional;
 
 import com.nins77.bandream.config.BanRules;
 import com.nins77.bandream.config.BlockBanMode;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -28,8 +26,8 @@ public final class BlockBanEvents {
             return;
         }
         BlockState state = event.getLevel().getBlockState(event.getPos());
-        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-        if (id != null) {
+        String id = BanRules.blockId(state.getBlock());
+        if (!id.isEmpty()) {
             Optional<BlockBanMode> mode = blockMode(id, player);
             if (mode.isEmpty()) {
                 return;
@@ -50,8 +48,8 @@ public final class BlockBanEvents {
             return;
         }
         BlockState state = event.getLevel().getBlockState(event.getPos());
-        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-        if (id != null && blockMode(id, player).orElse(null) == BlockBanMode.FULL) {
+        String id = BanRules.blockId(state.getBlock());
+        if (!id.isEmpty() && blockMode(id, player).orElse(null) == BlockBanMode.FULL) {
             event.getLevel().removeBlock(event.getPos(), false);
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.FAIL);
@@ -64,8 +62,8 @@ public final class BlockBanEvents {
             || BanRules.isPlayerWhitelisted(player)) {
             return;
         }
-        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(event.getState().getBlock());
-        if (id != null && blockMode(id, player).orElse(null) == BlockBanMode.FULL) {
+        String id = BanRules.blockId(event.getState().getBlock());
+        if (!id.isEmpty() && blockMode(id, player).orElse(null) == BlockBanMode.FULL) {
             event.getLevel().removeBlock(event.getPos(), false);
             event.setCanceled(true);
         }
@@ -80,13 +78,14 @@ public final class BlockBanEvents {
         if (event.getEntity() instanceof Player player && BanRules.isPlayerWhitelisted(player)) {
             return;
         }
-        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(event.getPlacedBlock().getBlock());
-        if (id != null && BanRules.blockBanMode(id, level.dimension().location()).orElse(null) == BlockBanMode.FULL) {
+        String id = BanRules.blockId(event.getPlacedBlock().getBlock());
+        if (!id.isEmpty()
+            && BanRules.blockBanMode(id, level.dimension().location()).orElse(null) == BlockBanMode.FULL) {
             event.setCanceled(true);
         }
     }
 
-    private static Optional<BlockBanMode> blockMode(ResourceLocation id, ServerPlayer player) {
+    private static Optional<BlockBanMode> blockMode(String id, ServerPlayer player) {
         return BanRules.blockBanMode(id, player.level().dimension().location());
     }
 }

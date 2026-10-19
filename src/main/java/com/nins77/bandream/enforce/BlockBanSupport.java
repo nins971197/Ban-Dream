@@ -9,8 +9,6 @@ import java.util.WeakHashMap;
 import com.nins77.bandream.config.BanRules;
 import com.nins77.bandream.config.BlockBanMode;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
@@ -38,8 +36,8 @@ public final class BlockBanSupport {
         if (!BanRules.hasBlockRules() || level.isClientSide()) {
             return false;
         }
-        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock());
-        return id != null && BanRules.blockBanMode(id, level.dimension().location()).isPresent();
+        String id = BanRules.blockId(level.getBlockState(pos).getBlock());
+        return !id.isEmpty() && BanRules.blockBanMode(id, level.dimension().location()).isPresent();
     }
 
     public static void trackCapabilities(AttachCapabilitiesEvent<BlockEntity> event) {
@@ -69,8 +67,8 @@ public final class BlockBanSupport {
     }
 
     private static Optional<BlockBanMode> blockMode(BlockEntity blockEntity) {
-        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(blockEntity.getBlockState().getBlock());
-        if (id == null) {
+        String id = BanRules.blockId(blockEntity.getBlockState().getBlock());
+        if (id.isEmpty()) {
             return Optional.empty();
         }
         return BanRules.blockBanMode(id, blockEntity.getLevel().dimension().location());

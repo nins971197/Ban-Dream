@@ -66,6 +66,9 @@ run every twenty ticks, Curios checks run with the ten-tick full check, and bloc
 structure events exit before registry lookup when their rule type is empty. Hopper ticks
 check only the source, self and actual output side.
 
+Measured query costs and rough server-load estimates are recorded in
+`docs/performance.md`.
+
 ## Ban Stick actions
 
 `PendingActionManager` stores one short-lived action per player. The server sends an

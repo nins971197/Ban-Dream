@@ -30,10 +30,13 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraftforge.fml.loading.FMLPaths;
 
 public final class BanRules {
@@ -82,6 +85,12 @@ public final class BanRules {
     private static volatile boolean hasDimensionRules;
     private static final Map<String, Optional<NbtPathArgument.NbtPath>> PATH_CACHE = new ConcurrentHashMap<>();
     private static final Map<String, Optional<Tag>> VALUE_CACHE = new ConcurrentHashMap<>();
+    private static final Map<Item, String> ITEM_ID_CACHE = new ConcurrentHashMap<>();
+    private static final Map<Block, String> BLOCK_ID_CACHE = new ConcurrentHashMap<>();
+    private static final Map<EntityType<?>, String> ENTITY_ID_CACHE = new ConcurrentHashMap<>();
+    private static final Map<Enchantment, String> ENCHANTMENT_ID_CACHE = new ConcurrentHashMap<>();
+    private static final Map<MobEffect, String> EFFECT_ID_CACHE = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, String> DIMENSION_ID_CACHE = new ConcurrentHashMap<>();
 
     private BanRules() {
     }
@@ -389,28 +398,60 @@ public final class BanRules {
         return !banIndex.candidates(type, id).isEmpty();
     }
 
+    public static String itemId(Item item) {
+        return ITEM_ID_CACHE.computeIfAbsent(item, key -> idOf(BuiltInRegistries.ITEM.getKey(key)));
+    }
+
+    public static String blockId(Block block) {
+        return BLOCK_ID_CACHE.computeIfAbsent(block, key -> idOf(BuiltInRegistries.BLOCK.getKey(key)));
+    }
+
+    public static String entityId(EntityType<?> type) {
+        return ENTITY_ID_CACHE.computeIfAbsent(type, key -> idOf(BuiltInRegistries.ENTITY_TYPE.getKey(key)));
+    }
+
+    public static String enchantmentId(Enchantment enchantment) {
+        return ENCHANTMENT_ID_CACHE.computeIfAbsent(enchantment,
+            key -> idOf(BuiltInRegistries.ENCHANTMENT.getKey(key)));
+    }
+
+    public static String effectId(MobEffect effect) {
+        return EFFECT_ID_CACHE.computeIfAbsent(effect, key -> idOf(BuiltInRegistries.MOB_EFFECT.getKey(key)));
+    }
+
+    public static String dimensionId(ResourceLocation dimension) {
+        return DIMENSION_ID_CACHE.computeIfAbsent(dimension, ResourceLocation::toString);
+    }
+
+    private static String idOf(ResourceLocation id) {
+        return id == null ? "" : id.toString();
+    }
+
     public static Optional<BanEntry> findItem(ItemStack stack, ResourceLocation dimension, BanTrigger trigger) {
         if (stack.isEmpty() || !hasItemRules(trigger)) {
             return Optional.empty();
         }
-        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        String id = itemId.toString();
+        String id = itemId(stack.getItem());
+        if (id.isEmpty()) {
+            return Optional.empty();
+        }
+        String dimensionId = dimensionId(dimension);
 
         for (BanEntry entry : banIndex.candidates(BanType.ITEM, id)) {
-            if (entry.matchesScope(dimension) && entry.trigger == trigger) {
+            if (entry.matchesScope(dimensionId) && entry.trigger == trigger) {
                 return Optional.of(entry);
             }
         }
         if (hasNbtRules) {
             for (BanEntry entry : banIndex.candidates(BanType.NBT, id)) {
-                if (entry.matchesScope(dimension) && entry.trigger == trigger
-                    && matchesNbtEntry(entry, stack, itemId)) {
+                if (entry.matchesScope(dimensionId) && entry.trigger == trigger
+                    && matchesNbtEntry(entry, stack)) {
                     return Optional.of(entry);
                 }
             }
             for (BanEntry entry : banIndex.candidates(BanType.NBT, "*")) {
-                if (entry.matchesScope(dimension) && entry.trigger == trigger
-                    && matchesNbtEntry(entry, stack, itemId)) {
+                if (entry.matchesScope(dimensionId) && entry.trigger == trigger
+                    && matchesNbtEntry(entry, stack)) {
                     return Optional.of(entry);
                 }
             }
@@ -418,10 +459,7 @@ public final class BanRules {
         return Optional.empty();
     }
 
-    private static boolean matchesNbtEntry(BanEntry entry, ItemStack stack, ResourceLocation itemId) {
-        if (!"*".equals(entry.id) && !entry.id.equals(itemId.toString())) {
-            return false;
-        }
+    private static boolean matchesNbtEntry(BanEntry entry, ItemStack stack) {
         CompoundTag root = stack.getTag();
         if (root == null || root.isEmpty()) {
             return false;
@@ -466,10 +504,18 @@ public final class BanRules {
     }
 
     public static boolean isEntityBanned(ResourceLocation entityId, ResourceLocation dimension) {
+        return isEntityBanned(entityId.toString(), dimension);
+    }
+
+    public static boolean isEntityBanned(EntityType<?> entityType, ResourceLocation dimension) {
+        return isEntityBanned(entityId(entityType), dimension);
+    }
+
+    public static boolean isEntityBanned(String id, ResourceLocation dimension) {
         if (!hasEntityRules) {
             return false;
         }
-        return banIndex.matches(BanType.ENTITY, entityId.toString(), dimension);
+        return banIndex.matches(BanType.ENTITY, id, dimension);
     }
 
     public static boolean isStructureBanned(ResourceLocation structureId, ResourceLocation dimension) {
@@ -480,8 +526,10 @@ public final class BanRules {
     }
 
     public static boolean isEnchantmentBanned(Enchantment enchantment, ResourceLocation dimension) {
-        ResourceLocation id = BuiltInRegistries.ENCHANTMENT.getKey(enchantment);
-        return id != null && isEnchantmentBanned(id.toString(), dimension);
+        if (!hasEnchantmentRules) {
+            return false;
+        }
+        return isEnchantmentBanned(enchantmentId(enchantment), dimension);
     }
 
     public static boolean isEnchantmentBanned(String id, ResourceLocation dimension) {
@@ -492,8 +540,10 @@ public final class BanRules {
     }
 
     public static boolean isEffectBanned(MobEffect effect, ResourceLocation dimension) {
-        ResourceLocation id = BuiltInRegistries.MOB_EFFECT.getKey(effect);
-        return id != null && isEffectBanned(id.toString(), dimension);
+        if (!hasEffectRules) {
+            return false;
+        }
+        return isEffectBanned(effectId(effect), dimension);
     }
 
     public static boolean isEffectBanned(String id, ResourceLocation dimension) {
@@ -507,7 +557,7 @@ public final class BanRules {
         if (!hasDimensionRules) {
             return false;
         }
-        return banIndex.matches(BanType.DIMENSION, dimension.toString(), dimension);
+        return banIndex.matches(BanType.DIMENSION, dimensionId(dimension), dimension);
     }
 
     public static boolean isDimensionBanned(Level level) {
@@ -515,12 +565,17 @@ public final class BanRules {
     }
 
     public static Optional<BlockBanMode> blockBanMode(ResourceLocation blockId, ResourceLocation dimension) {
+        return blockBanMode(blockId.toString(), dimension);
+    }
+
+    public static Optional<BlockBanMode> blockBanMode(String blockId, ResourceLocation dimension) {
         if (!hasBlockRules) {
             return Optional.empty();
         }
+        String dimensionId = dimensionId(dimension);
         boolean interactionBlocked = false;
-        for (BanEntry entry : banIndex.candidates(BanType.BLOCK, blockId.toString())) {
-            if (!entry.matchesScope(dimension)) {
+        for (BanEntry entry : banIndex.candidates(BanType.BLOCK, blockId)) {
+            if (!entry.matchesScope(dimensionId)) {
                 continue;
             }
             if (entry.blockMode == BlockBanMode.FULL) {
