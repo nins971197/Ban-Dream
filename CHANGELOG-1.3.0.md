@@ -13,6 +13,11 @@
 - Block list entries show scope and ban mode in their tooltips.
 - `/bbban list item book` and `/bbban list block book` now generate written books.
 - Shared list grouping and display text were consolidated.
+- Ban Stick clicks now open block, mob and barrel option panels.
+- Right-clicking a block or mob opens a bottom-right global unban confirmation.
+- Sneak right-clicking a barrel globally unbans all contained item IDs immediately.
+- Item and block list entries now open a management panel for mode changes or unbans.
+- Added optional Curios support for removing banned items from equipped curio slots.
 - Renamed all user-facing mod titles to Ban Dream.
 - Removed Java logging calls and explanatory comments from packaged sources.
 - Moved architecture and build notes into the workspace `docs` directory.

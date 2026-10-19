@@ -1,6 +1,6 @@
 package com.nins77.bandream.enforce;
 
-import com.nins77.bandream.action.PendingBanManager;
+import com.nins77.bandream.action.PendingActionManager;
 import com.nins77.bandream.config.BanRules;
 import com.nins77.bandream.config.BanTrigger;
 import com.nins77.bandream.network.BanNetwork;
@@ -52,7 +52,7 @@ public final class BanEvents {
         }
         boolean fullCheck = player.tickCount % 10 == 0;
         if (BanRules.hasItemRules(BanTrigger.INVENTORY)
-            || (fullCheck && BanRules.hasEnchantmentRules())) {
+            || (fullCheck && (BanRules.hasItemRules(BanTrigger.USE) || BanRules.hasEnchantmentRules()))) {
             BanEnforcement.enforcePlayer(player, fullCheck);
         }
     }
@@ -159,7 +159,8 @@ public final class BanEvents {
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            PendingBanManager.clear(player);
+            PendingActionManager.clear(player);
+            BanStickEvents.clearPlayer(player);
             BanEnforcement.clearPlayerState(player);
         }
     }

@@ -13,9 +13,10 @@ Ban Dream
 
 Server-side administration for banning items, blocks, entities, structures, enchantments,
 dimensions, mob effects and item NBT. Bans support global or per-dimension scope,
-an optional paginated item browser, written-book exports and editable JSON config.
-A Ban Stick provides click-to-confirm banning for mobs and barrel contents.
+an optional paginated item and block browser, written-book exports and editable JSON config.
+A Ban Stick provides option panels for blocks, mobs and barrel contents.
 Player whitelist entries exempt selected players from player-facing restrictions.
+Optional Curios integration also removes banned items from equipped curio slots.
 
 Commands:
 /bbban ban ...    create or update a ban
@@ -23,7 +24,6 @@ Commands:
 /bbban list ...   list bans, or open the item browser
 /bbban whitelist ... manage exempt players
 /bbban stick      obtain the Ban Stick
-/bbban confirm    confirm a Ban Stick target
 /bbban reload     reload config/bandream/bans.json
 
 Requires permission level 3 (administrator).
@@ -47,6 +47,13 @@ side = "BOTH"
 modId = "jei"
 mandatory = false
 versionRange = "[15,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.bandream]]
+modId = "curios"
+mandatory = false
+versionRange = "[5.0.0,)"
 ordering = "AFTER"
 side = "BOTH"
 

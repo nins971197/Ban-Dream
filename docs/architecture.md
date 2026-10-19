@@ -10,8 +10,9 @@ This document is workspace-only and is not packaged into the mod jar.
 4. `BanEvents` handles item, entity, effect, enchantment, and dimension enforcement.
 5. `BlockBanEvents` handles block interaction, breaking, and placement rules.
 6. `BlockBanSupport` answers block mode and item I/O queries for mixins and events.
-7. `BanStickEvents` handles Ban Stick target selection and confirmation prompts.
-8. `BanEnforcement` applies inventory, effect, dimension, and entity cleanup.
+7. `BanStickEvents` selects Ban Stick targets and opens server-validated option panels.
+8. `BanActionHandler` maps client choices to ban or unban operations.
+9. `BanEnforcement` applies inventory, effect, dimension, and entity cleanup.
 
 ## Rule storage
 
@@ -57,6 +58,13 @@ Item movement is blocked at three layers:
 The item-handler guard applies to both block modes and to global or matching-dimension
 rules. It is a world-level rule and does not consult the player whitelist.
 
+## Ban Stick actions
+
+`PendingActionManager` stores one short-lived action per player. The server sends an
+`OpenChoicePacket`; the client displays a left-side option panel or a bottom-right
+confirmation panel. The client returns only an action ID and option index. The server
+validates permission, action expiry, and the stored target before writing rules.
+
 ## GUI model
 
 `BanListMenu` exposes a read-only 5-row container for items or blocks. The last row
@@ -65,8 +73,17 @@ and delegates item tooltips to the vanilla screen implementation. Both list type
 the same grouping, pagination, and read-only slot code; only the icon and tooltip lines
 differ.
 
+Clicking a content slot creates a list-entry action. The management panel can change the
+ban mode or remove all rules for that ID; the list is reopened after the choice.
+
 ## Optional JEI integration
 
 The common code emits only hidden item IDs. The client integration is compiled against
 small compile-only API descriptors and uses reflection at runtime, so JEI is not a hard
 dependency.
+
+## Optional Curios integration
+
+`CuriosCompat` is compiled against the Curios API but is only called when Curios is
+loaded. Periodic player checks scan normal and cosmetic curio stacks, remove banned items,
+and strip banned enchantments. Curios is not a required dependency.

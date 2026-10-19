@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.nins77.bandream.compat.CuriosCompat;
 import com.nins77.bandream.config.BanEntry;
 import com.nins77.bandream.config.BanRules;
 import com.nins77.bandream.config.BanTrigger;
@@ -27,6 +28,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.fml.ModList;
 
 public final class BanEnforcement {
     private static final Map<UUID, Integer> LAST_DIMENSION_WARNING = new ConcurrentHashMap<>();
@@ -39,23 +41,31 @@ public final class BanEnforcement {
             return;
         }
         ResourceLocation dimension = player.level().dimension().location();
-        boolean scanItems = BanRules.hasItemRules(BanTrigger.INVENTORY);
+        boolean scanInventoryItems = BanRules.hasItemRules(BanTrigger.INVENTORY);
+        boolean scanCuriosItems = scanInventoryItems || BanRules.hasItemRules(BanTrigger.USE);
         boolean scanEnchantments = fullCheck && BanRules.hasEnchantmentRules();
         boolean changed = false;
 
-        if (scanItems || scanEnchantments) {
-            changed |= scanCompartment(player, player.getInventory().items, dimension, scanItems, scanEnchantments);
-            changed |= scanCompartment(player, player.getInventory().armor, dimension, scanItems, scanEnchantments);
-            changed |= scanCompartment(player, player.getInventory().offhand, dimension, scanItems, scanEnchantments);
+        if (scanInventoryItems || scanEnchantments) {
+            changed |= scanCompartment(
+                player, player.getInventory().items, dimension, scanInventoryItems, scanEnchantments);
+            changed |= scanCompartment(
+                player, player.getInventory().armor, dimension, scanInventoryItems, scanEnchantments);
+            changed |= scanCompartment(
+                player, player.getInventory().offhand, dimension, scanInventoryItems, scanEnchantments);
         }
 
         ItemStack carried = player.containerMenu.getCarried();
-        if (scanItems && !carried.isEmpty()) {
+        if (scanInventoryItems && !carried.isEmpty()) {
             Optional<BanEntry> banned = BanRules.findItem(carried, dimension, BanTrigger.INVENTORY);
             if (banned.isPresent()) {
                 player.containerMenu.setCarried(ItemStack.EMPTY);
                 changed = true;
             }
+        }
+
+        if (fullCheck && (scanCuriosItems || scanEnchantments) && ModList.get().isLoaded("curios")) {
+            changed |= CuriosCompat.enforce(player, dimension, scanCuriosItems, scanEnchantments);
         }
 
         if (BanRules.hasEffectRules()) {

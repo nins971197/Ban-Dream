@@ -331,6 +331,10 @@ public final class BanRules {
         return banIndex.entries().size();
     }
 
+    public static boolean hasRule(BanType type, String id) {
+        return !banIndex.candidates(type, id).isEmpty();
+    }
+
     public static Optional<BanEntry> findItem(ItemStack stack, ResourceLocation dimension, BanTrigger trigger) {
         if (stack.isEmpty() || !hasItemRules(trigger)) {
             return Optional.empty();

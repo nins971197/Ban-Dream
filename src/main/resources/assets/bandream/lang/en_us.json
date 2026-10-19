@@ -10,7 +10,7 @@
   "bandream.gui.empty.item": "No banned items",
   "bandream.gui.empty.block": "No banned blocks",
   "item.bandream.ban_stick": "Ban Stick",
-  "item.bandream.ban_stick.tooltip1": "Left-click a mob to request banning its entity type",
-  "item.bandream.ban_stick.tooltip2": "Sneak left-click a barrel to request banning all contained items",
-  "item.bandream.ban_stick.tooltip3": "Run /bbban confirm within 60 seconds"
+  "item.bandream.ban_stick.tooltip1": "Left-click a block or mob to open ban options",
+  "item.bandream.ban_stick.tooltip2": "Sneak left-click a barrel to ban all contained items",
+  "item.bandream.ban_stick.tooltip3": "Right-click a block or mob to confirm a global unban; sneak right-click a barrel to unban its items"
 }

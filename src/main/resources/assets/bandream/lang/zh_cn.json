@@ -10,7 +10,7 @@
   "bandream.gui.empty.item": "没有被封禁的物品",
   "bandream.gui.empty.block": "没有被封禁的方块",
   "item.bandream.ban_stick": "封禁棒",
-  "item.bandream.ban_stick.tooltip1": "左键生物：请求确认后封禁该生物类型",
-  "item.bandream.ban_stick.tooltip2": "潜行左键木桶：请求确认后封禁桶内全部物品",
-  "item.bandream.ban_stick.tooltip3": "输入 /bbban confirm 确认，60 秒内有效"
+  "item.bandream.ban_stick.tooltip1": "左键方块/生物：打开封禁选项",
+  "item.bandream.ban_stick.tooltip2": "潜行左键木桶：封禁桶内全部物品",
+  "item.bandream.ban_stick.tooltip3": "右键方块/生物：确认全局解封；潜行右键木桶：一键解封桶内物品"
 }

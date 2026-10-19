@@ -24,7 +24,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import com.nins77.bandream.action.PendingBanManager;
 import com.nins77.bandream.config.BanEntry;
 import com.nins77.bandream.config.BanRules;
 import com.nins77.bandream.config.BanScope;
@@ -62,8 +61,6 @@ public final class BanCommands {
         root.then(unbanRoot());
         root.then(listRoot());
         root.then(WhitelistCommands.node());
-        root.then(Commands.literal("confirm").executes(BanCommands::confirmPending));
-        root.then(Commands.literal("cancel").executes(BanCommands::cancelPending));
         root.then(Commands.literal("stick").executes(BanCommands::giveBanStick));
         root.then(Commands.literal("reload").executes(BanCommands::reload));
         event.getDispatcher().register(root);
@@ -521,38 +518,6 @@ public final class BanCommands {
         }
     }
 
-    private static int confirmPending(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        CommandSourceStack source = context.getSource();
-        ServerPlayer player = requirePlayer(source);
-        PendingBanManager.PendingBan pending = PendingBanManager.get(player);
-        if (pending == null) {
-            source.sendFailure(Component.literal("没有待确认的封禁，或确认已超过 60 秒"));
-            return 0;
-        }
-        try {
-            int count = BanRules.banAll(pending.entries());
-            PendingBanManager.clear(player);
-            BanEnforcement.afterRulesChanged(source.getServer(),
-                pending.entries().stream().anyMatch(entry -> entry.type == BanType.ENTITY),
-                pending.entries().stream().anyMatch(entry -> entry.type == BanType.BLOCK));
-            source.sendSuccess(() -> Component.literal(
-                "已确认封禁：" + pending.summary() + "（写入 " + count + " 条规则）")
-                .withStyle(ChatFormatting.GREEN), true);
-            return count;
-        } catch (Exception exception) {
-            throw new SimpleCommandExceptionType(
-                Component.literal("写入封禁配置失败: " + exception.getMessage())).create();
-        }
-    }
-
-    private static int cancelPending(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer player = requirePlayer(context.getSource());
-        PendingBanManager.clear(player);
-        context.getSource().sendSuccess(() -> Component.literal("已取消待确认的封禁")
-            .withStyle(ChatFormatting.YELLOW), false);
-        return 1;
-    }
-
     private static int giveBanStick(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
         ServerPlayer player = requirePlayer(source);
@@ -594,10 +559,10 @@ public final class BanCommands {
             "/bbban whitelist add|remove|list <玩家>  — 豁免物品/效果/维度限制")
             .withStyle(ChatFormatting.GRAY));
         source.sendSystemMessage(Component.literal(
-            "/bbban stick  — 获得封禁棒；左键生物，潜行左键木桶")
+            "/bbban stick  — 左键方块/生物打开封禁选项，右键确认全局解封")
             .withStyle(ChatFormatting.GRAY));
         source.sendSystemMessage(Component.literal(
-            "/bbban confirm  — 确认待处理封禁；/bbban cancel 取消")
+            "潜行左键木桶：封禁桶内物品；潜行右键木桶：一键解封桶内物品")
             .withStyle(ChatFormatting.GRAY));
         source.sendSystemMessage(Component.literal(
             "/bbban reload").withStyle(ChatFormatting.GRAY));

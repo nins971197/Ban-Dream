@@ -3,11 +3,15 @@ package com.nins77.bandream.gui;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.nins77.bandream.action.PendingActionManager;
 import com.nins77.bandream.config.BanEntry;
 import com.nins77.bandream.config.BanRules;
 import com.nins77.bandream.config.BanType;
+import com.nins77.bandream.network.BanNetwork;
+import com.nins77.bandream.network.ChoiceLayout;
 import com.nins77.bandream.text.BanText;
 import net.minecraft.ChatFormatting;
+import net.minecraft.commands.Commands;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -139,6 +143,7 @@ public final class BanListMenu extends AbstractContainerMenu {
                 lore.add(Component.literal("JEI: 隐藏").withStyle(ChatFormatting.DARK_GRAY));
             }
         }
+        lore.add(Component.literal("左键：管理封禁方式 / 解封").withStyle(ChatFormatting.AQUA));
         lore.add(Component.literal("编号 #" + (index + 1)).withStyle(ChatFormatting.DARK_GRAY));
         setLore(stack, lore);
         return stack;
@@ -171,6 +176,7 @@ public final class BanListMenu extends AbstractContainerMenu {
                 .withStyle(ChatFormatting.GRAY));
             lore.add(Component.literal("物品传输: 禁止输入/输出").withStyle(ChatFormatting.DARK_GRAY));
         }
+        lore.add(Component.literal("左键：管理封禁方式 / 解封").withStyle(ChatFormatting.AQUA));
         lore.add(Component.literal("编号 #" + (index + 1)).withStyle(ChatFormatting.DARK_GRAY));
         setLore(stack, lore);
         return stack;
@@ -228,9 +234,28 @@ public final class BanListMenu extends AbstractContainerMenu {
             return;
         }
         if (slotId >= 0 && slotId < CONTAINER_SLOTS) {
+            if (slotId < CONTENT_SLOTS && player instanceof ServerPlayer serverPlayer) {
+                int groupIndex = page * CONTENT_SLOTS + slotId;
+                if (groupIndex < groups.size()) {
+                    openEntryChoice(serverPlayer, groups.get(groupIndex));
+                }
+            }
             return;
         }
         super.clicked(slotId, button, clickType, player);
+    }
+
+    private void openEntryChoice(ServerPlayer player, BanRules.RuleGroup group) {
+        if (!player.hasPermissions(Commands.LEVEL_ADMINS)) {
+            return;
+        }
+        List<String> options = type == BanType.BLOCK
+            ? List.of("禁止交互（全局）", "直接禁止（全局）", "解封")
+            : List.of("禁止使用/交互（全局）", "直接禁止（全局）", "解封");
+        int actionId = PendingActionManager.offer(
+            player, PendingActionManager.Kind.LIST_ENTRY, type, List.of(group.id()));
+        BanNetwork.sendChoice(player, actionId, "管理" + BanText.typeLabel(type),
+            group.id(), ChoiceLayout.LEFT, options);
     }
 
     @Override
