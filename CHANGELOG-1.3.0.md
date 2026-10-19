@@ -9,6 +9,10 @@
 - Full block bans remove the block on left-click or right-click.
 - Banned blocks reject hopper and Forge-capability item input/output in both modes.
 - Banned containers and pipes no longer exchange items after rules change.
+- `/bbban list block` now opens the same paginated, read-only list interface as items.
+- Block list entries show scope and ban mode in their tooltips.
+- `/bbban list item book` and `/bbban list block book` now generate written books.
+- Shared list grouping and display text were consolidated.
 - Renamed all user-facing mod titles to Ban Dream.
 - Removed Java logging calls and explanatory comments from packaged sources.
 - Moved architecture and build notes into the workspace `docs` directory.

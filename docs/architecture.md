@@ -59,9 +59,11 @@ rules. It is a world-level rule and does not consult the player whitelist.
 
 ## GUI model
 
-`BanListMenu` exposes a read-only 5-row container. The last row contains page and close
-controls. `BanListScreen` renders a custom container-style panel and delegates item
-tooltips to the vanilla screen implementation.
+`BanListMenu` exposes a read-only 5-row container for items or blocks. The last row
+contains page and close controls. `BanListScreen` renders a custom container-style panel
+and delegates item tooltips to the vanilla screen implementation. Both list types share
+the same grouping, pagination, and read-only slot code; only the icon and tooltip lines
+differ.
 
 ## Optional JEI integration
 

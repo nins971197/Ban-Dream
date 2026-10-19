@@ -482,14 +482,14 @@ public final class BanRules {
         return CONFIG_PATH;
     }
 
-    public static List<ItemGroup> itemGroups() {
-        Map<String, List<BanEntry>> grouped = new TreeMap<>(banIndex.byId(BanType.ITEM));
+    public static List<RuleGroup> groups(BanType type) {
+        Map<String, List<BanEntry>> grouped = new TreeMap<>(banIndex.byId(type));
         return grouped.entrySet().stream()
-            .map(pair -> new ItemGroup(pair.getKey(), List.copyOf(pair.getValue())))
+            .map(pair -> new RuleGroup(pair.getKey(), List.copyOf(pair.getValue())))
             .toList();
     }
 
-    public record ItemGroup(String id, List<BanEntry> entries) {
+    public record RuleGroup(String id, List<BanEntry> entries) {
     }
 
     private static final class BanConfigFile {

@@ -1,4 +1,4 @@
-package com.nins77.bandream.command;
+package com.nins77.bandream.text;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +36,19 @@ public final class BanText {
         return "全局";
     }
 
+    public static String scopeLabel(BanEntry entry) {
+        if (entry.type == BanType.DIMENSION) {
+            return "全局";
+        }
+        return entry.scope == BanScope.DIMENSION ? "维度 " + entry.dimension : "全局";
+    }
+
     public static String trigger(BanEntry entry) {
         return entry.trigger == BanTrigger.USE ? "使用/交互时删除" : "进入背包时删除";
+    }
+
+    public static String blockMode(BlockBanMode mode) {
+        return mode == BlockBanMode.INTERACT ? "禁止交互" : "完全禁止";
     }
 
     public static String line(BanEntry entry) {
@@ -54,8 +65,7 @@ public final class BanText {
                 out.append(" | JEI=").append(Boolean.FALSE.equals(entry.jeiVisible) ? "隐藏" : "显示");
             }
             if (entry.type == BanType.BLOCK) {
-                out.append(" | 模式=")
-                    .append(entry.blockMode == BlockBanMode.INTERACT ? "禁止交互" : "完全禁止");
+                out.append(" | 模式=").append(blockMode(entry.blockMode));
             }
         }
         return out.toString();

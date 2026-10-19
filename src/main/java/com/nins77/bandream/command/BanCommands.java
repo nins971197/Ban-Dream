@@ -34,6 +34,7 @@ import com.nins77.bandream.config.BlockBanMode;
 import com.nins77.bandream.enforce.BanEnforcement;
 import com.nins77.bandream.gui.BanListMenu;
 import com.nins77.bandream.item.BanItems;
+import com.nins77.bandream.text.BanText;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -469,20 +470,20 @@ public final class BanCommands {
 
     private static int list(CommandSourceStack source, BanType type, boolean book) throws CommandSyntaxException {
         List<BanEntry> entries = BanRules.entries(type);
-        if (type == BanType.ITEM) {
-            ServerPlayer player = requirePlayer(source);
-            BanListMenu.open(player);
+        ServerPlayer player = source.getPlayer();
+        if (!book && player != null && (type == BanType.ITEM || type == BanType.BLOCK)) {
+            BanListMenu.open(player, type);
             source.sendSuccess(() -> Component.literal(
-                "已打开封禁物品列表，共 " + entries.size() + " 条记录")
+                "已打开封禁" + BanText.typeLabel(type) + "列表，共 " + entries.size() + " 条记录")
                 .withStyle(ChatFormatting.AQUA), false);
             return Math.max(1, entries.size());
         }
         if (book) {
-            ServerPlayer player = requirePlayer(source);
+            ServerPlayer bookPlayer = requirePlayer(source);
             List<ItemStack> written = BanBookFactory.createVolumes(type, entries);
             for (ItemStack stack : written) {
-                if (!player.getInventory().add(stack)) {
-                    player.drop(stack, false);
+                if (!bookPlayer.getInventory().add(stack)) {
+                    bookPlayer.drop(stack, false);
                 }
             }
             source.sendSuccess(() -> Component.literal(
@@ -587,7 +588,7 @@ public final class BanCommands {
         source.sendSystemMessage(Component.literal(
             "/bbban unban <类型> <ID> [global|in <维度>]").withStyle(ChatFormatting.GRAY));
         source.sendSystemMessage(Component.literal(
-            "/bbban list <类型> [book]  — 物品列表始终打开分页 GUI")
+            "/bbban list <类型> [book]  — 物品/方块默认打开分页 GUI，book 生成成书")
             .withStyle(ChatFormatting.GRAY));
         source.sendSystemMessage(Component.literal(
             "/bbban whitelist add|remove|list <玩家>  — 豁免物品/效果/维度限制")

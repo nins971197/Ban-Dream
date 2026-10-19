@@ -5,10 +5,12 @@ import java.util.List;
 
 import com.nins77.bandream.config.BanEntry;
 import com.nins77.bandream.config.BanRules;
-import com.nins77.bandream.config.BanScope;
-import com.nins77.bandream.config.BanTrigger;
+import com.nins77.bandream.config.BanType;
+import com.nins77.bandream.text.BanText;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,8 +26,9 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraftforge.network.NetworkHooks;
 
 public final class BanListMenu extends AbstractContainerMenu {
     public static final int CONTAINER_SLOTS = 45;
@@ -38,13 +41,15 @@ public final class BanListMenu extends AbstractContainerMenu {
 
     private final SimpleContainer container = new SimpleContainer(CONTAINER_SLOTS);
     private final ContainerData data = new SimpleContainerData(2);
-    private final List<BanRules.ItemGroup> groups;
+    private final BanType type;
+    private final List<BanRules.RuleGroup> groups;
     private int page;
     private int totalPages = 1;
 
-    public BanListMenu(int windowId, Inventory playerInventory) {
+    public BanListMenu(int windowId, Inventory playerInventory, BanType type) {
         super(BanMenus.BAN_LIST.get(), windowId);
-        this.groups = BanRules.itemGroups();
+        this.type = listType(type);
+        this.groups = BanRules.groups(this.type);
         this.totalPages = Math.max(1, (groups.size() + CONTENT_SLOTS - 1) / CONTENT_SLOTS);
 
         for (int row = 0; row < 5; row++) {
@@ -69,10 +74,11 @@ public final class BanListMenu extends AbstractContainerMenu {
         refresh();
     }
 
-    public static void open(ServerPlayer player) {
-        player.openMenu(new SimpleMenuProvider(
-            (windowId, inventory, ignored) -> new BanListMenu(windowId, inventory),
-            Component.translatable("bandream.gui.title")));
+    public static void open(ServerPlayer player, BanType type) {
+        BanType listType = listType(type);
+        NetworkHooks.openScreen(player, new SimpleMenuProvider(
+            (windowId, inventory, ignored) -> new BanListMenu(windowId, inventory, listType),
+            Component.translatable(titleKey(listType))), buffer -> buffer.writeEnum(listType));
     }
 
     private void refresh() {
@@ -83,6 +89,9 @@ public final class BanListMenu extends AbstractContainerMenu {
             if (groupIndex < groups.size()) {
                 container.setItem(index, stackFor(groups.get(groupIndex), groupIndex));
             }
+        }
+        if (groups.isEmpty()) {
+            container.setItem(0, emptyStack());
         }
         if (page > 0) {
             container.setItem(PREVIOUS_SLOT, navStack(Items.SPECTRAL_ARROW,
@@ -101,51 +110,101 @@ public final class BanListMenu extends AbstractContainerMenu {
         this.broadcastChanges();
     }
 
-    private ItemStack stackFor(BanRules.ItemGroup group, int index) {
+    private ItemStack stackFor(BanRules.RuleGroup group, int index) {
+        return type == BanType.BLOCK ? blockStack(group, index) : itemStack(group, index);
+    }
+
+    private ItemStack itemStack(BanRules.RuleGroup group, int index) {
         ResourceLocation id = ResourceLocation.tryParse(group.id());
         Item item = id == null ? null : BuiltInRegistries.ITEM.get(id);
-        boolean missing = item == null || item == Items.AIR && !"minecraft:air".equals(group.id());
-        ItemStack stack = new ItemStack(missing ? Items.BARRIER : item);
+        boolean air = item == Items.AIR;
+        boolean missing = item == null || (item == Items.AIR && !"minecraft:air".equals(group.id()));
+        Item icon = missing || air ? Items.BARRIER : item;
+        ItemStack stack = new ItemStack(icon);
         stack.setCount(1);
-        if (missing) {
-            stack.setHoverName(Component.literal(group.id()).withStyle(ChatFormatting.RED));
+        if (missing || air) {
+            stack.setHoverName(Component.literal(group.id())
+                .withStyle(missing ? ChatFormatting.RED : ChatFormatting.GRAY));
         }
 
         List<Component> lore = new ArrayList<>();
         if (missing) {
             lore.add(Component.literal("物品未加载（可能缺少对应模组）").withStyle(ChatFormatting.DARK_RED));
         }
+        lore.add(Component.literal("ID: " + group.id()).withStyle(ChatFormatting.DARK_GRAY));
         for (BanEntry entry : group.entries()) {
-            String scope = entry.scope == BanScope.DIMENSION
-                ? "维度 " + entry.dimension
-                : "全局";
-            String trigger = entry.trigger == BanTrigger.USE
-                ? "使用/交互时删除"
-                : "进入背包时删除";
-            lore.add(Component.literal("范围: " + scope).withStyle(ChatFormatting.GRAY));
-            lore.add(Component.literal("方式: " + trigger).withStyle(ChatFormatting.GRAY));
+            lore.add(Component.literal("范围: " + BanText.scopeLabel(entry)).withStyle(ChatFormatting.GRAY));
+            lore.add(Component.literal("方式: " + BanText.trigger(entry)).withStyle(ChatFormatting.GRAY));
             if (Boolean.FALSE.equals(entry.jeiVisible)) {
                 lore.add(Component.literal("JEI: 隐藏").withStyle(ChatFormatting.DARK_GRAY));
             }
         }
         lore.add(Component.literal("编号 #" + (index + 1)).withStyle(ChatFormatting.DARK_GRAY));
+        setLore(stack, lore);
+        return stack;
+    }
+
+    private ItemStack blockStack(BanRules.RuleGroup group, int index) {
+        ResourceLocation id = ResourceLocation.tryParse(group.id());
+        Block block = id == null ? null : BuiltInRegistries.BLOCK.get(id);
+        boolean missing = block == null || (block == Blocks.AIR && !"minecraft:air".equals(group.id()));
+        Item icon = missing ? Items.BARRIER : block.asItem();
+        boolean noItem = !missing && icon == Items.AIR;
+        ItemStack stack = new ItemStack(missing || noItem ? Items.BARRIER : icon);
+        stack.setCount(1);
+        if (missing) {
+            stack.setHoverName(Component.literal(group.id()).withStyle(ChatFormatting.RED));
+        } else if (noItem) {
+            stack.setHoverName(block.getName().copy().withStyle(ChatFormatting.AQUA));
+        }
+
+        List<Component> lore = new ArrayList<>();
+        if (missing) {
+            lore.add(Component.literal("方块未加载（可能缺少对应模组）").withStyle(ChatFormatting.DARK_RED));
+        } else if (noItem) {
+            lore.add(Component.literal("该方块没有物品形式，使用屏障图标").withStyle(ChatFormatting.DARK_GRAY));
+        }
+        lore.add(Component.literal("ID: " + group.id()).withStyle(ChatFormatting.DARK_GRAY));
+        for (BanEntry entry : group.entries()) {
+            lore.add(Component.literal("范围: " + BanText.scopeLabel(entry)).withStyle(ChatFormatting.GRAY));
+            lore.add(Component.literal("方式: " + BanText.blockMode(entry.blockMode))
+                .withStyle(ChatFormatting.GRAY));
+            lore.add(Component.literal("物品传输: 禁止输入/输出").withStyle(ChatFormatting.DARK_GRAY));
+        }
+        lore.add(Component.literal("编号 #" + (index + 1)).withStyle(ChatFormatting.DARK_GRAY));
+        setLore(stack, lore);
+        return stack;
+    }
+
+    private ItemStack emptyStack() {
+        ItemStack stack = new ItemStack(Items.BARRIER);
+        stack.setHoverName(Component.translatable("bandream.gui.empty." + type.id())
+            .withStyle(ChatFormatting.GRAY));
+        return stack;
+    }
+
+    private static void setLore(ItemStack stack, List<Component> lore) {
         ListTag loreTag = new ListTag();
         for (Component line : lore) {
             loreTag.add(StringTag.valueOf(Component.Serializer.toJson(line)));
         }
         stack.getOrCreateTagElement("display").put("Lore", loreTag);
-        return stack;
     }
 
     private ItemStack navStack(Item item, Component name, int targetPage) {
         ItemStack stack = new ItemStack(item);
         stack.setHoverName(name);
-        ListTag lore = new ListTag();
-        lore.add(StringTag.valueOf(Component.Serializer.toJson(
-            Component.literal("第 " + targetPage + " / " + totalPages + " 页")
-                .withStyle(ChatFormatting.GRAY))));
-        stack.getOrCreateTagElement("display").put("Lore", lore);
+        setLore(stack, List.of(Component.translatable("bandream.gui.page", targetPage, totalPages)
+            .withStyle(ChatFormatting.GRAY)));
         return stack;
+    }
+
+    private static BanType listType(BanType type) {
+        return type == BanType.BLOCK ? BanType.BLOCK : BanType.ITEM;
+    }
+
+    private static String titleKey(BanType type) {
+        return "bandream.gui.title." + type.id();
     }
 
     @Override

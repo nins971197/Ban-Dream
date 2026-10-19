@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.nins77.bandream.config.BanEntry;
 import com.nins77.bandream.config.BanType;
+import com.nins77.bandream.text.BanText;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -54,7 +55,7 @@ public final class BanBookFactory {
     private static ItemStack createBook(BanType type, int volume, int volumeCount, List<String> lines) {
         ItemStack book = new ItemStack(Items.WRITTEN_BOOK);
         CompoundTag tag = book.getOrCreateTag();
-        String title = "Ban Dream - " + type.name();
+        String title = "Ban Dream - " + BanText.typeLabel(type);
         if (volumeCount > 1) {
             title += " " + volume + "/" + volumeCount;
         }
