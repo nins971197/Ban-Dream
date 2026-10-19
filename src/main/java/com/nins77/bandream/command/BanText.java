@@ -7,6 +7,7 @@ import com.nins77.bandream.config.BanEntry;
 import com.nins77.bandream.config.BanScope;
 import com.nins77.bandream.config.BanTrigger;
 import com.nins77.bandream.config.BanType;
+import com.nins77.bandream.config.BlockBanMode;
 
 public final class BanText {
     private BanText() {
@@ -20,6 +21,7 @@ public final class BanText {
             case ENCHANTMENT -> "附魔";
             case DIMENSION -> "维度";
             case EFFECT -> "Buff";
+            case BLOCK -> "方块";
             case NBT -> "NBT";
         };
     }
@@ -50,6 +52,10 @@ public final class BanText {
             }
             if (entry.type == BanType.ITEM) {
                 out.append(" | JEI=").append(Boolean.FALSE.equals(entry.jeiVisible) ? "隐藏" : "显示");
+            }
+            if (entry.type == BanType.BLOCK) {
+                out.append(" | 模式=")
+                    .append(entry.blockMode == BlockBanMode.INTERACT ? "禁止交互" : "完全禁止");
             }
         }
         return out.toString();

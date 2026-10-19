@@ -11,6 +11,7 @@ public final class BanEntry {
     public String dimension;
     public Boolean jeiVisible = true;
     public BanTrigger trigger = BanTrigger.INVENTORY;
+    public BlockBanMode blockMode = BlockBanMode.FULL;
     public String path;
     public String value;
 
@@ -28,6 +29,7 @@ public final class BanEntry {
         BanEntry out = new BanEntry(type, id, scope, dimension);
         out.jeiVisible = jeiVisible;
         out.trigger = trigger;
+        out.blockMode = blockMode;
         out.path = path;
         out.value = value;
         return out;
@@ -70,6 +72,15 @@ public final class BanEntry {
         if (type == BanType.DIMENSION) {
             jeiVisible = null;
             trigger = BanTrigger.INVENTORY;
+            blockMode = null;
+            path = null;
+            value = null;
+        } else if (type == BanType.BLOCK) {
+            if (blockMode == null) {
+                blockMode = BlockBanMode.FULL;
+            }
+            jeiVisible = null;
+            trigger = null;
             path = null;
             value = null;
         } else if (type == BanType.NBT) {
@@ -90,9 +101,11 @@ public final class BanEntry {
                 value = "*";
             }
             jeiVisible = null;
+            blockMode = null;
         } else {
             path = null;
             value = null;
+            blockMode = null;
             if (type != BanType.ITEM) {
                 jeiVisible = null;
             } else if (jeiVisible == null) {

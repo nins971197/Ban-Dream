@@ -19,6 +19,7 @@ Ban Dream 用于服务器和整合包统一封禁物品、生物、结构、附�
   - `inventory`：进入玩家背包后立即删除。
   - `use`：物品可以留在背包中，但右键、交互、攻击或开始使用时删除并取消操作。
 - 生物与结构支持全局或指定维度封禁。
+- 方块支持全局或指定维度封禁，可选择仅禁止交互或完全禁止交互、破坏和放置。
 - 附魔与 Buff 支持全局或指定维度封禁；已存在的违规附魔/效果会被移除。
 - 维度封禁会阻止传送、传送门、命令跨维度进入；已在其中的玩家会被送回可用维度。
 - NBT 封禁支持原版 NBT 路径语法和 SNBT 值匹配，可指定物品或使用 `*` 匹配任意物品。
@@ -42,7 +43,7 @@ $env:JAVA_HOME = '你的 JDK 17 目录'
 .\gradlew.bat build
 ```
 
-产物位于 `build/libs/ban_dream-1.2.0.jar`。
+产物位于 `build/libs/ban_dream-1.3.0.jar`。
 
 ## 多平台开发环境
 
@@ -121,6 +122,20 @@ Cleanroom 当前使用 `0.7.9-alpha`。NeoForge 工程依赖官方
 
 ```text
 /bbban ban dimension minecraft:the_end
+```
+
+### 封禁方块
+
+```text
+/bbban ban block <方块ID> [global|in <维度ID>] [mode interact|full]
+```
+
+`interact` 只禁止右键交互；`full` 同时禁止交互、破坏和放置。省略范围时默认全局，
+省略模式时默认 `full`。
+
+```text
+/bbban ban block minecraft:barrel in minecraft:overworld mode interact
+/bbban ban block minecraft:bedrock global mode full
 ```
 
 ### 封禁 NBT
@@ -258,6 +273,7 @@ config/bandream/bans.json
 | `dimension` | `DIMENSION` 范围时填写维度 ID |
 | `jeiVisible` | 仅物品使用；`false` 时从 JEI 隐藏 |
 | `trigger` | `INVENTORY` 或 `USE` |
+| `blockMode` | 仅方块使用；`INTERACT` 或 `FULL` |
 | `path` | 仅 NBT 使用；原版 NBT 路径 |
 | `value` | 仅 NBT 使用；SNBT 值，`*` 表示仅检查路径存在 |
 
@@ -269,6 +285,7 @@ JSON 中 `type`、`scope`、`trigger` 不区分大小写。修改文件后执行
 ## 行为说明
 
 - 物品删除同时覆盖主背包、快捷栏、盔甲栏、副手和光标上的物品。
+- 方块 `FULL` 模式在当前维度取消玩家交互、破坏和方块放置；`INTERACT` 只取消右键交互。
 - 附魔封禁会从玩家物品中移除违规附魔；Buff 封禁会移除玩家与生物的违规效果。
 - 生物封禁同时拦截新生成和从存档加载的实体，并在指令生效时清理已加载实体。
 - 结构封禁在结构放置阶段取消，因此不会破坏周围地形。

@@ -45,6 +45,13 @@
       "scope": "global"
     },
     {
+      "type": "block",
+      "id": "minecraft:barrel",
+      "scope": "dimension",
+      "dimension": "minecraft:overworld",
+      "blockMode": "interact"
+    },
+    {
       "type": "nbt",
       "id": "minecraft:stick",
       "scope": "global",

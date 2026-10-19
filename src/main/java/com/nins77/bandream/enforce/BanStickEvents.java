@@ -10,6 +10,7 @@ import com.nins77.bandream.config.BanEntry;
 import com.nins77.bandream.config.BanScope;
 import com.nins77.bandream.config.BanTrigger;
 import com.nins77.bandream.config.BanType;
+import com.nins77.bandream.config.BlockBanMode;
 import com.nins77.bandream.item.BanItems;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -22,6 +23,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BarrelBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -63,10 +65,8 @@ public final class BanStickEvents {
         if (event.getLevel().isClientSide()
             || event.getAction() != PlayerInteractEvent.LeftClickBlock.Action.START
             || !(event.getEntity() instanceof ServerPlayer player)
-            || !player.isShiftKeyDown()
             || !isBanStick(player.getMainHandItem())
-            || !(event.getLevel() instanceof ServerLevel level)
-            || !level.getBlockState(event.getPos()).is(Blocks.BARREL)) {
+            || !(event.getLevel() instanceof ServerLevel level)) {
             return;
         }
 
@@ -76,39 +76,53 @@ public final class BanStickEvents {
             BanEnforcement.notify(player, "使用封禁棒需要管理员权限");
             return;
         }
-        if (!(level.getBlockEntity(event.getPos()) instanceof BarrelBlockEntity barrel)) {
+        BlockState state = level.getBlockState(event.getPos());
+        if (state.isAir()) {
             return;
         }
 
-        Set<ResourceLocation> itemIds = new LinkedHashSet<>();
-        for (int slot = 0; slot < barrel.getContainerSize(); slot++) {
-            ItemStack stack = barrel.getItem(slot);
-            if (!stack.isEmpty()) {
-                ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
-                if (id != null) {
-                    itemIds.add(id);
+        if (player.isShiftKeyDown() && state.is(Blocks.BARREL)
+            && level.getBlockEntity(event.getPos()) instanceof BarrelBlockEntity barrel) {
+            Set<ResourceLocation> itemIds = new LinkedHashSet<>();
+            for (int slot = 0; slot < barrel.getContainerSize(); slot++) {
+                ItemStack stack = barrel.getItem(slot);
+                if (!stack.isEmpty()) {
+                    ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+                    if (id != null) {
+                        itemIds.add(id);
+                    }
                 }
             }
-        }
-        if (itemIds.isEmpty()) {
-            BanEnforcement.notify(player, "这个木桶是空的");
+            if (itemIds.isEmpty()) {
+                BanEnforcement.notify(player, "这个木桶是空的");
+                return;
+            }
+            List<BanEntry> entries = new ArrayList<>(itemIds.size());
+            for (ResourceLocation id : itemIds) {
+                BanEntry entry = new BanEntry(BanType.ITEM, id.toString(), BanScope.GLOBAL, null);
+                entry.trigger = BanTrigger.INVENTORY;
+                entry.jeiVisible = true;
+                entries.add(entry);
+            }
+            String preview = itemIds.stream().limit(6).map(ResourceLocation::toString)
+                .reduce((left, right) -> left + ", " + right).orElse("");
+            if (itemIds.size() > 6) {
+                preview += " 等";
+            }
+            PendingBanManager.offer(player, entries,
+                "木桶内检测到 " + itemIds.size() + " 种物品: " + preview);
             return;
         }
 
-        List<BanEntry> entries = new ArrayList<>(itemIds.size());
-        for (ResourceLocation id : itemIds) {
-            BanEntry entry = new BanEntry(BanType.ITEM, id.toString(), BanScope.GLOBAL, null);
-            entry.trigger = BanTrigger.INVENTORY;
-            entry.jeiVisible = true;
-            entries.add(entry);
+        ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        if (blockId == null) {
+            return;
         }
-        String preview = itemIds.stream().limit(6).map(ResourceLocation::toString)
-            .reduce((left, right) -> left + ", " + right).orElse("");
-        if (itemIds.size() > 6) {
-            preview += " 等";
-        }
-        PendingBanManager.offer(player, entries,
-            "木桶内检测到 " + itemIds.size() + " 种物品: " + preview);
+        BanEntry entry = new BanEntry(BanType.BLOCK, blockId.toString(), BanScope.GLOBAL, null);
+        entry.blockMode = BlockBanMode.FULL;
+        PendingBanManager.offer(player, List.of(entry),
+            "目标方块: " + blockId + "（" + state.getBlock().getName().getString()
+                + "）。确认后将全局完全禁止");
     }
 
     private static boolean isBanStick(ItemStack stack) {

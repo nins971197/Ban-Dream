@@ -10,6 +10,7 @@ public enum BanType {
     ENCHANTMENT("enchantment", true),
     DIMENSION("dimension", false),
     EFFECT("effect", true),
+    BLOCK("block", true),
     NBT("nbt", true);
 
     private final String id;

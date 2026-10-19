@@ -25,6 +25,8 @@ final class BanCommandSupport {
         (context, builder) -> SharedSuggestionProvider.suggestResource(BuiltInRegistries.ENCHANTMENT.keySet(), builder);
     static final SuggestionProvider<CommandSourceStack> EFFECT_IDS =
         (context, builder) -> SharedSuggestionProvider.suggestResource(BuiltInRegistries.MOB_EFFECT.keySet(), builder);
+    static final SuggestionProvider<CommandSourceStack> BLOCK_IDS =
+        (context, builder) -> SharedSuggestionProvider.suggestResource(BuiltInRegistries.BLOCK.keySet(), builder);
     static final SuggestionProvider<CommandSourceStack> STRUCTURE_IDS =
         (context, builder) -> SharedSuggestionProvider.suggestResource(
             context.getSource().getServer().registryAccess().registryOrThrow(Registries.STRUCTURE).keySet(), builder);
@@ -35,6 +37,8 @@ final class BanCommandSupport {
         (context, builder) -> SharedSuggestionProvider.suggest(List.of("inventory", "use"), builder);
     static final SuggestionProvider<CommandSourceStack> JEI_MODES =
         (context, builder) -> SharedSuggestionProvider.suggest(List.of("show", "hide"), builder);
+    static final SuggestionProvider<CommandSourceStack> BLOCK_MODES =
+        (context, builder) -> SharedSuggestionProvider.suggest(List.of("interact", "full"), builder);
 
     private BanCommandSupport() {
     }
@@ -49,6 +53,7 @@ final class BanCommandSupport {
             case ENTITY -> BuiltInRegistries.ENTITY_TYPE.containsKey(location);
             case ENCHANTMENT -> BuiltInRegistries.ENCHANTMENT.containsKey(location);
             case EFFECT -> BuiltInRegistries.MOB_EFFECT.containsKey(location);
+            case BLOCK -> BuiltInRegistries.BLOCK.containsKey(location);
             case STRUCTURE -> source.getServer().registryAccess()
                 .registryOrThrow(Registries.STRUCTURE).containsKey(location);
             case DIMENSION -> source.levels().stream().anyMatch(key -> key.location().equals(location));

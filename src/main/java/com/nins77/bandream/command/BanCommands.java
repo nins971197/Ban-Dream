@@ -4,6 +4,8 @@ import static com.nins77.bandream.command.BanCommandSupport.DIMENSION_IDS;
 import static com.nins77.bandream.command.BanCommandSupport.EFFECT_IDS;
 import static com.nins77.bandream.command.BanCommandSupport.ENCHANTMENT_IDS;
 import static com.nins77.bandream.command.BanCommandSupport.ENTITY_IDS;
+import static com.nins77.bandream.command.BanCommandSupport.BLOCK_IDS;
+import static com.nins77.bandream.command.BanCommandSupport.BLOCK_MODES;
 import static com.nins77.bandream.command.BanCommandSupport.ITEM_IDS;
 import static com.nins77.bandream.command.BanCommandSupport.JEI_MODES;
 import static com.nins77.bandream.command.BanCommandSupport.STRUCTURE_IDS;
@@ -28,6 +30,7 @@ import com.nins77.bandream.config.BanRules;
 import com.nins77.bandream.config.BanScope;
 import com.nins77.bandream.config.BanTrigger;
 import com.nins77.bandream.config.BanType;
+import com.nins77.bandream.config.BlockBanMode;
 import com.nins77.bandream.enforce.BanEnforcement;
 import com.nins77.bandream.gui.BanListMenu;
 import com.nins77.bandream.item.BanItems;
@@ -72,6 +75,7 @@ public final class BanCommands {
         root.then(simpleBan("structure", BanType.STRUCTURE, STRUCTURE_IDS));
         root.then(simpleBan("enchantment", BanType.ENCHANTMENT, ENCHANTMENT_IDS));
         root.then(simpleBan("effect", BanType.EFFECT, EFFECT_IDS));
+        root.then(blockBan());
         root.then(dimensionBan());
         root.then(nbtBan());
         return root;
@@ -210,6 +214,44 @@ public final class BanCommands {
                 }));
     }
 
+    private static LiteralArgumentBuilder<CommandSourceStack> blockBan() {
+        var id = Commands.argument("id", ResourceLocationArgument.id()).suggests(BLOCK_IDS);
+        id.executes(context -> banBlock(context, BanScope.GLOBAL, BlockBanMode.FULL));
+
+        LiteralArgumentBuilder<CommandSourceStack> global = Commands.literal("global")
+            .executes(context -> banBlock(context, BanScope.GLOBAL, BlockBanMode.FULL));
+        global.then(blockModeNode(BanScope.GLOBAL));
+
+        var dimension = Commands.argument("dimension", ResourceLocationArgument.id())
+            .suggests(DIMENSION_IDS)
+            .executes(context -> banBlock(context, BanScope.DIMENSION, BlockBanMode.FULL));
+        dimension.then(blockModeNode(BanScope.DIMENSION));
+
+        id.then(global);
+        id.then(Commands.literal("in").then(dimension));
+        id.then(blockModeNode(BanScope.GLOBAL));
+        return Commands.literal("block").then(id);
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> blockModeNode(BanScope scope) {
+        return Commands.literal("mode").then(Commands.argument("blockMode", StringArgumentType.word())
+            .suggests(BLOCK_MODES)
+            .executes(context -> banBlock(context, scope,
+                parseBlockMode(StringArgumentType.getString(context, "blockMode")))));
+    }
+
+    private static int banBlock(
+        CommandContext<CommandSourceStack> context,
+        BanScope scope,
+        BlockBanMode mode
+    ) throws CommandSyntaxException {
+        ResourceLocation id = ResourceLocationArgument.getId(context, "id");
+        requireKnown(context.getSource(), BanType.BLOCK, id.toString());
+        BanEntry entry = new BanEntry(BanType.BLOCK, id.toString(), scope, dimension(context, scope));
+        entry.blockMode = mode;
+        return applyBan(context.getSource(), entry);
+    }
+
     private static LiteralArgumentBuilder<CommandSourceStack> nbtBan() {
         LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal("nbt");
         root.then(nbtTarget("*", true));
@@ -297,6 +339,7 @@ public final class BanCommands {
         root.then(simpleUnban("structure", BanType.STRUCTURE, STRUCTURE_IDS));
         root.then(simpleUnban("enchantment", BanType.ENCHANTMENT, ENCHANTMENT_IDS));
         root.then(simpleUnban("effect", BanType.EFFECT, EFFECT_IDS));
+        root.then(simpleUnban("block", BanType.BLOCK, BLOCK_IDS));
         root.then(dimensionUnban());
         root.then(nbtUnban());
         return root;
@@ -528,6 +571,9 @@ public final class BanCommands {
             "/bbban ban entity|structure|enchantment|effect <ID> [global|in <维度>]")
             .withStyle(ChatFormatting.GRAY));
         source.sendSystemMessage(Component.literal(
+            "/bbban ban block <方块ID> [global|in <维度>] [mode interact|full]")
+            .withStyle(ChatFormatting.GRAY));
+        source.sendSystemMessage(Component.literal(
             "/bbban ban dimension <维度>").withStyle(ChatFormatting.GRAY));
         source.sendSystemMessage(Component.literal(
             "/bbban ban nbt <物品|*> <NBT路径> <SNBT值|*> [global|in <维度>] [trigger inventory|use]")
@@ -567,6 +613,10 @@ public final class BanCommands {
 
     private static BanTrigger parseTrigger(String value) {
         return "use".equals(value.toLowerCase(Locale.ROOT)) ? BanTrigger.USE : BanTrigger.INVENTORY;
+    }
+
+    private static BlockBanMode parseBlockMode(String value) {
+        return BlockBanMode.byId(value).orElse(BlockBanMode.FULL);
     }
 
     private static ServerPlayer requirePlayer(CommandSourceStack source) throws CommandSyntaxException {

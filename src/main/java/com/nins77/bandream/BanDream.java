@@ -4,6 +4,7 @@ import com.nins77.bandream.config.BanRules;
 import com.nins77.bandream.command.BanCommands;
 import com.nins77.bandream.enforce.BanEvents;
 import com.nins77.bandream.enforce.BanStickEvents;
+import com.nins77.bandream.enforce.BlockBanEvents;
 import com.nins77.bandream.gui.BanMenus;
 import com.nins77.bandream.item.BanItems;
 import com.nins77.bandream.network.BanNetwork;
@@ -25,6 +26,7 @@ public final class BanDream {
         BanNetwork.register();
         MinecraftForge.EVENT_BUS.register(BanEvents.class);
         MinecraftForge.EVENT_BUS.register(BanStickEvents.class);
+        MinecraftForge.EVENT_BUS.register(BlockBanEvents.class);
         MinecraftForge.EVENT_BUS.addListener(BanCommands::register);
         modBus.addListener(BanItems::addCreative);
         modBus.addListener(this::commonSetup);

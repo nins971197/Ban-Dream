@@ -8,8 +8,9 @@ This document is workspace-only and is not packaged into the mod jar.
 2. `BanRules` validates, sorts, indexes, and writes rules to `config/bandream/bans.json`.
 3. `RuleIndex` provides type-and-ID lookups without scanning the full rule list.
 4. `BanEvents` handles item, entity, effect, enchantment, and dimension enforcement.
-5. `BanStickEvents` handles Ban Stick target selection and confirmation prompts.
-6. `BanEnforcement` applies inventory, effect, dimension, and entity cleanup.
+5. `BlockBanEvents` handles block interaction, breaking, and placement rules.
+6. `BanStickEvents` handles Ban Stick target selection and confirmation prompts.
+7. `BanEnforcement` applies inventory, effect, dimension, and entity cleanup.
 
 ## Rule storage
 

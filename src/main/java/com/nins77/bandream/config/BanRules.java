@@ -56,6 +56,8 @@ public final class BanRules {
                 return null;
             }
         })
+        .registerTypeAdapter(BlockBanMode.class, (JsonDeserializer<BlockBanMode>) (json, type, context) ->
+            BlockBanMode.byId(json.getAsString()).orElse(null))
         .create();
     private static final Path CONFIG_PATH = FMLPaths.CONFIGDIR.get().resolve("bandream").resolve("bans.json");
     private static final Comparator<BanEntry> ORDER = Comparator
@@ -75,6 +77,7 @@ public final class BanRules {
     private static volatile boolean hasEffectRules;
     private static volatile boolean hasEntityRules;
     private static volatile boolean hasNbtRules;
+    private static volatile boolean hasBlockRules;
     private static final Map<String, Optional<NbtPathArgument.NbtPath>> PATH_CACHE = new ConcurrentHashMap<>();
     private static final Map<String, Optional<Tag>> VALUE_CACHE = new ConcurrentHashMap<>();
 
@@ -294,6 +297,7 @@ public final class BanRules {
         hasEffectRules = bans.stream().anyMatch(entry -> entry.type == BanType.EFFECT);
         hasEntityRules = bans.stream().anyMatch(entry -> entry.type == BanType.ENTITY);
         hasNbtRules = bans.stream().anyMatch(entry -> entry.type == BanType.NBT);
+        hasBlockRules = bans.stream().anyMatch(entry -> entry.type == BanType.BLOCK);
     }
 
     private static void writeConfig(List<BanEntry> bans, List<PlayerWhitelistEntry> players) throws IOException {
@@ -431,6 +435,23 @@ public final class BanRules {
 
     public static boolean isDimensionBanned(Level level) {
         return isDimensionBanned(level.dimension().location());
+    }
+
+    public static Optional<BlockBanMode> blockBanMode(ResourceLocation blockId, ResourceLocation dimension) {
+        if (!hasBlockRules) {
+            return Optional.empty();
+        }
+        boolean interactionBlocked = false;
+        for (BanEntry entry : banIndex.candidates(BanType.BLOCK, blockId.toString())) {
+            if (!entry.matchesScope(dimension)) {
+                continue;
+            }
+            if (entry.blockMode == BlockBanMode.FULL) {
+                return Optional.of(BlockBanMode.FULL);
+            }
+            interactionBlocked = true;
+        }
+        return interactionBlocked ? Optional.of(BlockBanMode.INTERACT) : Optional.empty();
     }
 
     public static boolean hasItemRules(BanTrigger trigger) {
