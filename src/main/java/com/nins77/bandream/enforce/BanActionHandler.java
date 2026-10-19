@@ -12,7 +12,6 @@ import com.nins77.bandream.config.BanRules;
 import com.nins77.bandream.config.BanScope;
 import com.nins77.bandream.config.BanTrigger;
 import com.nins77.bandream.config.BanType;
-import com.nins77.bandream.config.BlockBanMode;
 import com.nins77.bandream.gui.BanListMenu;
 import com.nins77.bandream.network.BanNetwork;
 import com.nins77.bandream.network.ChoiceLayout;
@@ -23,9 +22,7 @@ import net.minecraft.server.level.ServerPlayer;
 public final class BanActionHandler {
     private static final List<String> BLOCK_OPTIONS = List.of(
         "全局禁止",
-        "全局禁止交互",
-        "当前维度禁止",
-        "当前维度禁止交互");
+        "当前维度禁止");
     private static final List<String> ENTITY_OPTIONS = List.of(
         "全局禁止",
         "当前维度禁止");
@@ -136,17 +133,15 @@ public final class BanActionHandler {
         PendingActionManager.Action action,
         int choice
     ) throws IOException {
-        if (choice > 3 || action.ids().isEmpty()) {
+        if (choice > 1 || action.ids().isEmpty()) {
             BanEnforcement.notify(player, "无效的封禁选项");
             return;
         }
-        BanScope scope = choice < 2 ? BanScope.GLOBAL : BanScope.DIMENSION;
-        BlockBanMode mode = (choice & 1) == 0 ? BlockBanMode.FULL : BlockBanMode.INTERACT;
+        BanScope scope = choice == 0 ? BanScope.GLOBAL : BanScope.DIMENSION;
         String id = action.ids().get(0);
-        BanRules.ban(blockEntry(id, scope, dimension(player, scope), mode));
+        BanRules.ban(blockEntry(id, scope, dimension(player, scope)));
         BanEnforcement.afterRulesChanged(player.server, false, true);
-        BanEnforcement.notify(player, "已封禁方块 " + id + "：" + scopeText(scope) + "，"
-            + BanText.blockMode(mode));
+        BanEnforcement.notify(player, "已封禁方块 " + id + "：" + scopeText(scope));
     }
 
     private static void applyStickEntity(
@@ -210,23 +205,31 @@ public final class BanActionHandler {
         PendingActionManager.Action action,
         int choice
     ) throws IOException {
-        if (choice > 2 || action.ids().isEmpty()) {
+        int maxChoice = action.type() == BanType.BLOCK ? 1 : 2;
+        if (choice > maxChoice || action.ids().isEmpty()) {
             return;
         }
         String id = action.ids().get(0);
+        if (action.type() == BanType.BLOCK) {
+            if (choice == 1) {
+                int removed = BanRules.unban(action.type(), id, null, null);
+                BanEnforcement.afterRulesChanged(player.server, false, true);
+                BanEnforcement.notify(player, removed == 0
+                    ? "没有匹配的封禁记录"
+                    : "已解除方块 " + id + "，移除 " + removed + " 条规则");
+                return;
+            }
+            BanRules.ban(blockEntry(id, BanScope.GLOBAL, null));
+            BanEnforcement.afterRulesChanged(player.server, false, true);
+            BanEnforcement.notify(player, "已设置方块 " + id + "：全局禁止");
+            return;
+        }
         if (choice == 2) {
             int removed = BanRules.unban(action.type(), id, null, null);
             BanEnforcement.afterRulesChanged(player.server, false, action.type() == BanType.BLOCK);
             BanEnforcement.notify(player, removed == 0
                 ? "没有匹配的封禁记录"
                 : "已解除" + BanText.typeLabel(action.type()) + " " + id + "，移除 " + removed + " 条规则");
-            return;
-        }
-        if (action.type() == BanType.BLOCK) {
-            BlockBanMode mode = choice == 0 ? BlockBanMode.INTERACT : BlockBanMode.FULL;
-            BanRules.ban(blockEntry(id, BanScope.GLOBAL, null, mode));
-            BanEnforcement.afterRulesChanged(player.server, false, true);
-            BanEnforcement.notify(player, "已设置方块 " + id + "：" + BanText.blockMode(mode));
             return;
         }
         if (action.type() == BanType.ITEM) {
@@ -239,10 +242,8 @@ public final class BanActionHandler {
         }
     }
 
-    private static BanEntry blockEntry(String id, BanScope scope, String dimension, BlockBanMode mode) {
-        BanEntry entry = new BanEntry(BanType.BLOCK, id, scope, dimension);
-        entry.blockMode = mode;
-        return entry;
+    private static BanEntry blockEntry(String id, BanScope scope, String dimension) {
+        return new BanEntry(BanType.BLOCK, id, scope, dimension);
     }
 
     private static BanEntry entityEntry(String id, BanScope scope, String dimension) {

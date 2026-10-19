@@ -9,6 +9,7 @@
   "bandream.gui.empty": "没有被封禁的物品",
   "bandream.gui.empty.item": "没有被封禁的物品",
   "bandream.gui.empty.block": "没有被封禁的方块",
+  "block.bandream.bakaban": "已限制方块",
   "item.bandream.ban_stick": "封禁棒",
   "item.bandream.ban_stick.tooltip1": "左键方块/生物：打开封禁选项",
   "item.bandream.ban_stick.tooltip2": "潜行左键木桶：封禁桶内全部物品",

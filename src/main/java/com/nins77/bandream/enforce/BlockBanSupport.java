@@ -2,12 +2,10 @@ package com.nins77.bandream.enforce;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
 
 import com.nins77.bandream.config.BanRules;
-import com.nins77.bandream.config.BlockBanMode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -25,7 +23,8 @@ public final class BlockBanSupport {
             || blockEntity.getLevel().isClientSide() || blockEntity.isRemoved()) {
             return false;
         }
-        if (blockMode(blockEntity).isEmpty()) {
+        if (!BanRules.isBlockBanned(blockEntity.getBlockState().getBlock(),
+            blockEntity.getLevel().dimension().location())) {
             return false;
         }
         LOADED_BLOCK_ENTITIES.add(blockEntity);
@@ -37,7 +36,7 @@ public final class BlockBanSupport {
             return false;
         }
         String id = BanRules.blockId(level.getBlockState(pos).getBlock());
-        return !id.isEmpty() && BanRules.blockBanMode(id, level.dimension().location()).isPresent();
+        return BanRules.isBlockBanned(id, level.dimension().location());
     }
 
     public static void trackCapabilities(AttachCapabilitiesEvent<BlockEntity> event) {
@@ -66,11 +65,4 @@ public final class BlockBanSupport {
         }
     }
 
-    private static Optional<BlockBanMode> blockMode(BlockEntity blockEntity) {
-        String id = BanRules.blockId(blockEntity.getBlockState().getBlock());
-        if (id.isEmpty()) {
-            return Optional.empty();
-        }
-        return BanRules.blockBanMode(id, blockEntity.getLevel().dimension().location());
-    }
 }

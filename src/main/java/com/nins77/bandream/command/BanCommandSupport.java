@@ -37,9 +37,6 @@ final class BanCommandSupport {
         (context, builder) -> SharedSuggestionProvider.suggest(List.of("inventory", "use"), builder);
     static final SuggestionProvider<CommandSourceStack> JEI_MODES =
         (context, builder) -> SharedSuggestionProvider.suggest(List.of("show", "hide"), builder);
-    static final SuggestionProvider<CommandSourceStack> BLOCK_MODES =
-        (context, builder) -> SharedSuggestionProvider.suggest(List.of("interact", "full"), builder);
-
     private BanCommandSupport() {
     }
 

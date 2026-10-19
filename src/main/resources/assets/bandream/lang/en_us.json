@@ -9,6 +9,7 @@
   "bandream.gui.empty": "No banned items",
   "bandream.gui.empty.item": "No banned items",
   "bandream.gui.empty.block": "No banned blocks",
+  "block.bandream.bakaban": "Restricted Block",
   "item.bandream.ban_stick": "Ban Stick",
   "item.bandream.ban_stick.tooltip1": "Left-click a block or mob to open ban options",
   "item.bandream.ban_stick.tooltip2": "Sneak left-click a barrel to ban all contained items",

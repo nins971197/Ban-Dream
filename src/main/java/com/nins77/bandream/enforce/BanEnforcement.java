@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.nins77.bandream.block.BakabanManager;
 import com.nins77.bandream.compat.CuriosCompat;
 import com.nins77.bandream.config.BanEntry;
 import com.nins77.bandream.config.BanRules;
@@ -250,16 +251,24 @@ public final class BanEnforcement {
     ) {
         if (refreshBlockCapabilities) {
             BlockBanSupport.refreshItemCapabilities();
+            BakabanManager.refresh(server);
         }
         BanNetwork.syncAll();
-        if (purgeEntities && BanRules.hasEntityRules()) {
+        boolean entityRules = purgeEntities && BanRules.hasEntityRules();
+        boolean effectRules = BanRules.hasEffectRules();
+        if (entityRules || effectRules) {
             for (ServerLevel level : server.getAllLevels()) {
                 List<Entity> entities = new ArrayList<>();
                 level.getAllEntities().forEach(entities::add);
                 for (Entity entity : entities) {
-                    if (!(entity instanceof Player)
-                        && BanRules.isEntityBanned(entity.getType(), level.dimension().location())) {
+                    if (entity instanceof Player) {
+                        continue;
+                    }
+                    if (entityRules && BanRules.isEntityBanned(
+                        entity.getType(), level.dimension().location())) {
                         entity.discard();
+                    } else if (effectRules && entity instanceof LivingEntity living) {
+                        enforceLivingEffects(living);
                     }
                 }
             }

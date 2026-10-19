@@ -1,6 +1,7 @@
 package com.nins77.bandream.enforce;
 
 import com.nins77.bandream.action.PendingActionManager;
+import com.nins77.bandream.block.BakabanManager;
 import com.nins77.bandream.config.BanRules;
 import com.nins77.bandream.config.BanTrigger;
 import com.nins77.bandream.network.BanNetwork;
@@ -16,16 +17,22 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
+import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.MobEffectEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class BanEvents {
+    private static final Logger LOGGER = LoggerFactory.getLogger(BanEvents.class);
+
     private BanEvents() {
     }
 
@@ -33,8 +40,14 @@ public final class BanEvents {
     public static void onServerAboutToStart(ServerAboutToStartEvent event) {
         try {
             BanRules.load();
-        } catch (Exception ignored) {
+        } catch (Exception exception) {
+            LOGGER.error("Failed to load Ban Dream rules from {}", BanRules.configPath(), exception);
         }
+    }
+
+    @SubscribeEvent
+    public static void onServerStarted(ServerStartedEvent event) {
+        BakabanManager.refresh(event.getServer());
     }
 
     @SubscribeEvent
@@ -51,33 +64,24 @@ public final class BanEvents {
                 BanEnforcement.escapeBannedDimension(player);
             }
         }
-        boolean fullCheck = player.tickCount % 10 == 0;
-        boolean inventoryCheck = BanRules.hasItemRules(BanTrigger.INVENTORY)
-            && player.tickCount % 5 == 0;
-        if (inventoryCheck
-            || (fullCheck && (BanRules.hasItemRules(BanTrigger.USE) || BanRules.hasEnchantmentRules()))) {
-            BanEnforcement.enforcePlayer(player, fullCheck);
-        }
-    }
-
-    @SubscribeEvent
-    public static void onLivingTick(LivingEvent.LivingTickEvent event) {
-        LivingEntity entity = event.getEntity();
-        if (!entity.level().isClientSide && BanRules.hasEffectRules()
-            && entity.tickCount % 20 == 0 && !entity.getActiveEffects().isEmpty()) {
-            BanEnforcement.enforceLivingEffects(entity);
-        }
     }
 
     @SubscribeEvent
     public static void onEntityJoin(EntityJoinLevelEvent event) {
-        if (!BanRules.hasEntityRules() || event.getLevel().isClientSide()
-            || event.getEntity() instanceof Player) {
+        if (event.getLevel().isClientSide() || event.getEntity() instanceof Player) {
+            return;
+        }
+        boolean entityRules = BanRules.hasEntityRules();
+        boolean effectRules = BanRules.hasEffectRules();
+        if (!entityRules && !effectRules) {
             return;
         }
         Entity entity = event.getEntity();
-        if (BanRules.isEntityBanned(entity.getType(), event.getLevel().dimension().location())) {
+        if (entityRules && BanRules.isEntityBanned(
+            entity.getType(), event.getLevel().dimension().location())) {
             event.setCanceled(true);
+        } else if (effectRules && entity instanceof LivingEntity living) {
+            BanEnforcement.enforceLivingEffects(living);
         }
     }
 
@@ -152,6 +156,49 @@ public final class BanEvents {
                 return;
             }
             BanEnforcement.escapeBannedDimension(player);
+            BanEnforcement.enforcePlayer(player, true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && !BanRules.isPlayerWhitelisted(player)) {
+            BanEnforcement.escapeBannedDimension(player);
+            BanEnforcement.enforcePlayer(player, true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && !BanRules.isPlayerWhitelisted(player)) {
+            BanEnforcement.enforcePlayer(player, true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onContainerClose(PlayerContainerEvent.Close event) {
+        if (event.getEntity() instanceof ServerPlayer player && !BanRules.isPlayerWhitelisted(player)) {
+            BanEnforcement.enforcePlayer(player, true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onCrafted(PlayerEvent.ItemCraftedEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && !BanRules.isPlayerWhitelisted(player)) {
+            BanEnforcement.enforcePlayer(player, true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onSmelted(PlayerEvent.ItemSmeltedEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && !BanRules.isPlayerWhitelisted(player)) {
+            BanEnforcement.enforcePlayer(player, true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onEquipmentChange(LivingEquipmentChangeEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && !BanRules.isPlayerWhitelisted(player)) {
             BanEnforcement.enforcePlayer(player, true);
         }
     }

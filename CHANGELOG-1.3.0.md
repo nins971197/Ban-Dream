@@ -1,33 +1,40 @@
 # Ban Dream 1.3.0
 
 - Added block bans with global or per-dimension scope.
-- Added `interact` and `full` block ban modes.
 - Added `/bbban ban block`.
 - Ban Stick left-click now selects blocks for confirmation.
-- Full block bans cancel interaction, breaking, and entity placement.
-- Interact block bans allow placement and breaking while blocking right-click use.
-- Full block bans remove the block on left-click or right-click.
-- Banned blocks reject hopper and Forge-capability item input/output in both modes.
+- Block bans now redirect protected blocks to `bandream:bakaban`.
+- Block bans no longer use separate interaction/full modes; they support global or per-dimension scope.
+- Banned blocks reject hopper and Forge-capability item input/output.
 - Banned containers and pipes no longer exchange items after rules change.
 - `/bbban list block` now opens the same paginated, read-only list interface as items.
-- Block list entries show scope and ban mode in their tooltips.
+- Block list entries show scope in their tooltips.
 - `/bbban list item book` and `/bbban list block book` now generate written books.
 - Shared list grouping and display text were consolidated.
 - Ban Stick clicks now open block, mob and barrel option panels.
 - Right-clicking a block or mob opens a bottom-right global unban confirmation.
 - Sneak right-clicking a barrel globally unbans all contained item IDs immediately.
-- Item and block list entries now open a management panel for mode changes or unbans.
+- Item and block list entries now open a management panel for bans or unbans.
 - Added optional Curios support for removing banned items from equipped curio slots.
 - Restricted list entry management to left-click and closed the old list container first.
 - Preserved JEI visibility when changing an item ban mode.
 - Guarded client choice packets during disconnects and deduplicated entity right-click events.
 - Refreshed Curios stacks after item removal or enchantment cleanup.
 - Added rule-type fast paths for entities, structures, dimensions, effects and enchantments.
-- Reduced inventory scans to every five ticks while keeping item pickup handling immediate.
+- Replaced periodic player inventory scans with server-side `Inventory.add` and `Inventory.setItem` interception plus event-driven fallback checks.
+- Added a bounded chunk scanner with 8192 cells and 128 redirects per tick.
+- Fixed snapshot loss when another block occupied a saved position.
+- Preserved saved block data when block-entity restoration fails.
+- Added Curios change-event cleanup without a hard dependency.
 - Added early exits for block and structure events when no matching rule type exists.
 - Corrected hopper tick checks to inspect the actual output side.
 - Cached item, block, entity and dimension IDs for hot-path rule lookups.
+- Added the `bakaban` restricted block with a six-face texture and block item.
+- Block bans now redirect blocks to bakaban and persist original state and block entity data.
+- Unbanning restores loaded and newly loaded chunks; broken bakaban blocks retain their snapshots.
+- Removed block `interact`/`full` modes and made block bans scope-only.
+- Config load failures are now reported instead of silently ignored.
 - Renamed all user-facing mod titles to Ban Dream.
-- Removed Java logging calls and explanatory comments from packaged sources.
+- Removed development logging and explanatory comments from packaged sources; config-load failures still emit an error with the file path.
 - Moved architecture and build notes into the workspace `docs` directory.
 - Added Forge 1.12.2, Cleanroom 1.12.2, NeoForge 1.20.1, and NeoForge 1.21.1 workspaces.

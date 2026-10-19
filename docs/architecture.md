@@ -9,10 +9,11 @@ This document is workspace-only and is not packaged into the mod jar.
 3. `RuleIndex` provides type-and-ID lookups without scanning the full rule list.
 4. `BanEvents` handles item, entity, effect, enchantment, and dimension enforcement.
 5. `BlockBanEvents` handles block interaction, breaking, and placement rules.
-6. `BlockBanSupport` answers block mode and item I/O queries for mixins and events.
+6. `BlockBanSupport` answers item I/O queries for mixins and events.
 7. `BanStickEvents` selects Ban Stick targets and opens server-validated option panels.
 8. `BanActionHandler` maps client choices to ban or unban operations.
 9. `BanEnforcement` applies inventory, effect, dimension, and entity cleanup.
+10. `PlayerInventoryMixin` intercepts server-side `Inventory.add` and `Inventory.setItem`.
 
 ## Rule storage
 
@@ -42,9 +43,11 @@ Entity spawning and structure generation remain world-level rules.
 
 ## Block ban enforcement
 
-`INTERACT` keeps placement and breaking available, cancels block right-click use, and
-blocks item movement. `FULL` blocks placement, removes the block on either left-click or
-right-click, and also blocks item movement.
+Block rules now redirect protected blocks to `bandream:bakaban`. The redirect stores the
+original block state and block entity NBT in per-dimension world saved data. Loaded
+chunks are scanned in a bounded queue; unloaded chunks are restored or redirected when
+loaded. Breaking a bakaban does not remove the saved snapshot, and unbanned blocks are
+restored by chunk processing or by interacting with the bakaban.
 
 Item movement is blocked at three layers:
 
@@ -55,16 +58,18 @@ Item movement is blocked at three layers:
 - banned block entities are tracked weakly while loaded. Block rule changes invalidate
   and revive their capabilities so cached pipe connections are refreshed.
 
-The item-handler guard applies to both block modes and to global or matching-dimension
-rules. It is a world-level rule and does not consult the player whitelist.
+The item-handler guard applies to global or matching-dimension block rules. It is a
+world-level rule and does not consult the player whitelist.
 
 ## Performance guards
 
 Rule types with no entries are skipped before registry and index work. Player inventory
-scans run every five ticks, while item pickup triggers an immediate scan. Effect checks
-run every twenty ticks, Curios checks run with the ten-tick full check, and block or
-structure events exit before registry lookup when their rule type is empty. Hopper ticks
-check only the source, self and actual output side.
+insertion is checked by `PlayerInventoryMixin`; login, dimension changes, container close,
+pickup, crafting, smelting and equipment changes provide event-driven fallback checks.
+Effect additions are handled by `MobEffectEvent.Added`, and Curios changes by
+`CurioChangeEvent`. Block or structure events exit before registry lookup when their rule
+type is empty. Block scans process at most 8192 cells and 128 redirects per tick. Hopper
+ticks check only the source, self and actual output side.
 
 Measured query costs and rough server-load estimates are recorded in
 `docs/performance.md`.
@@ -84,8 +89,8 @@ and delegates item tooltips to the vanilla screen implementation. Both list type
 the same grouping, pagination, and read-only slot code; only the icon and tooltip lines
 differ.
 
-Clicking a content slot creates a list-entry action. The management panel can change the
-ban mode or remove all rules for that ID; the list is reopened after the choice.
+Clicking a content slot creates a list-entry action. The management panel can ban or
+remove all rules for that ID; the list is reopened after the choice.
 
 ## Optional JEI integration
 
@@ -95,6 +100,6 @@ dependency.
 
 ## Optional Curios integration
 
-`CuriosCompat` is compiled against the Curios API but is only called when Curios is
-loaded. Periodic player checks scan normal and cosmetic curio stacks, remove banned items,
-and strip banned enchantments. Curios is not a required dependency.
+`CuriosCompat` is compiled against the Curios API but is only registered when Curios is
+loaded. Curio change events scan normal and cosmetic stacks, remove banned items and strip
+banned enchantments. Curios is not a required dependency.

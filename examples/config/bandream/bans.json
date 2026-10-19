@@ -48,8 +48,7 @@
       "type": "block",
       "id": "minecraft:barrel",
       "scope": "dimension",
-      "dimension": "minecraft:overworld",
-      "blockMode": "interact"
+      "dimension": "minecraft:overworld"
     },
     {
       "type": "nbt",

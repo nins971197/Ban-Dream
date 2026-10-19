@@ -8,6 +8,7 @@
     "CapabilityProviderMixin",
     "BaseContainerBlockEntityMixin",
     "HopperBlockEntityMixin",
+    "PlayerInventoryMixin",
     "StructureStartMixin"
   ],
   "client": [],

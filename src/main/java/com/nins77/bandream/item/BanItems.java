@@ -1,7 +1,9 @@
 package com.nins77.bandream.item;
 
 import com.nins77.bandream.BanDream;
+import com.nins77.bandream.block.BanBlocks;
 import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -15,6 +17,8 @@ public final class BanItems {
 
     public static final RegistryObject<Item> BAN_STICK =
         ITEMS.register("ban_stick", BanStickItem::new);
+    public static final RegistryObject<Item> BAKABAN =
+        ITEMS.register("bakaban", () -> new BlockItem(BanBlocks.BAKABAN.get(), new Item.Properties()));
 
     private BanItems() {
     }
@@ -26,6 +30,7 @@ public final class BanItems {
     public static void addCreative(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
             event.accept(BAN_STICK.get());
+            event.accept(BAKABAN.get());
         }
     }
 }
