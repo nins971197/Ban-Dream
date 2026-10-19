@@ -5,6 +5,10 @@
 - Added `/bbban ban block`.
 - Ban Stick left-click now selects blocks for confirmation.
 - Full block bans cancel interaction, breaking, and entity placement.
+- Interact block bans allow placement and breaking while blocking right-click use.
+- Full block bans remove the block on left-click or right-click.
+- Banned blocks reject hopper and Forge-capability item input/output in both modes.
+- Banned containers and pipes no longer exchange items after rules change.
 - Renamed all user-facing mod titles to Ban Dream.
 - Removed Java logging calls and explanatory comments from packaged sources.
 - Moved architecture and build notes into the workspace `docs` directory.

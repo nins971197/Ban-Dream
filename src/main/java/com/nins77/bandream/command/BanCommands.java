@@ -321,7 +321,8 @@ public final class BanCommands {
     private static int applyBan(CommandSourceStack source, BanEntry entry) throws CommandSyntaxException {
         try {
             boolean replaced = BanRules.ban(entry);
-            BanEnforcement.afterRulesChanged(source.getServer(), entry.type == BanType.ENTITY);
+            BanEnforcement.afterRulesChanged(source.getServer(), entry.type == BanType.ENTITY,
+                entry.type == BanType.BLOCK);
             source.sendSuccess(() -> Component.literal(
                 (replaced ? "已更新封禁: " : "已封禁: ") + BanText.line(entry))
                 .withStyle(ChatFormatting.GREEN), true);
@@ -447,7 +448,8 @@ public final class BanCommands {
         if (removed == 0) {
             source.sendFailure(Component.literal("没有匹配的封禁记录: " + BanText.typeLabel(type) + " " + id));
         } else {
-            BanEnforcement.afterRulesChanged(source.getServer(), type == BanType.ENTITY);
+            BanEnforcement.afterRulesChanged(source.getServer(), type == BanType.ENTITY,
+                type == BanType.BLOCK);
             source.sendSuccess(() -> Component.literal(
                 "已解除 " + removed + " 条封禁: " + BanText.typeLabel(type) + " " + id)
                 .withStyle(ChatFormatting.GREEN), true);
@@ -530,7 +532,8 @@ public final class BanCommands {
             int count = BanRules.banAll(pending.entries());
             PendingBanManager.clear(player);
             BanEnforcement.afterRulesChanged(source.getServer(),
-                pending.entries().stream().anyMatch(entry -> entry.type == BanType.ENTITY));
+                pending.entries().stream().anyMatch(entry -> entry.type == BanType.ENTITY),
+                pending.entries().stream().anyMatch(entry -> entry.type == BanType.BLOCK));
             source.sendSuccess(() -> Component.literal(
                 "已确认封禁：" + pending.summary() + "（写入 " + count + " 条规则）")
                 .withStyle(ChatFormatting.GREEN), true);

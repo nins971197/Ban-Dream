@@ -5,11 +5,13 @@ import com.nins77.bandream.command.BanCommands;
 import com.nins77.bandream.enforce.BanEvents;
 import com.nins77.bandream.enforce.BanStickEvents;
 import com.nins77.bandream.enforce.BlockBanEvents;
+import com.nins77.bandream.enforce.BlockBanSupport;
 import com.nins77.bandream.gui.BanMenus;
 import com.nins77.bandream.item.BanItems;
 import com.nins77.bandream.network.BanNetwork;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -28,6 +30,7 @@ public final class BanDream {
         MinecraftForge.EVENT_BUS.register(BanStickEvents.class);
         MinecraftForge.EVENT_BUS.register(BlockBanEvents.class);
         MinecraftForge.EVENT_BUS.addListener(BanCommands::register);
+        MinecraftForge.EVENT_BUS.addGenericListener(BlockEntity.class, BlockBanSupport::trackCapabilities);
         modBus.addListener(BanItems::addCreative);
         modBus.addListener(this::commonSetup);
     }

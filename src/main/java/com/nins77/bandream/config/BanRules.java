@@ -458,6 +458,10 @@ public final class BanRules {
         return trigger == BanTrigger.USE ? hasUseItemRules : hasInventoryItemRules;
     }
 
+    public static boolean hasBlockRules() {
+        return hasBlockRules;
+    }
+
     public static boolean hasEnchantmentRules() {
         return hasEnchantmentRules;
     }

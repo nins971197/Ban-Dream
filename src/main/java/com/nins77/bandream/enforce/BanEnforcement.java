@@ -223,10 +223,21 @@ public final class BanEnforcement {
     }
 
     public static void afterRulesChanged(MinecraftServer server) {
-        afterRulesChanged(server, true);
+        afterRulesChanged(server, true, true);
     }
 
     public static void afterRulesChanged(MinecraftServer server, boolean purgeEntities) {
+        afterRulesChanged(server, purgeEntities, false);
+    }
+
+    public static void afterRulesChanged(
+        MinecraftServer server,
+        boolean purgeEntities,
+        boolean refreshBlockCapabilities
+    ) {
+        if (refreshBlockCapabilities) {
+            BlockBanSupport.refreshItemCapabilities();
+        }
         BanNetwork.syncAll();
         if (purgeEntities && BanRules.hasEntityRules()) {
             for (ServerLevel level : server.getAllLevels()) {

@@ -9,8 +9,9 @@ This document is workspace-only and is not packaged into the mod jar.
 3. `RuleIndex` provides type-and-ID lookups without scanning the full rule list.
 4. `BanEvents` handles item, entity, effect, enchantment, and dimension enforcement.
 5. `BlockBanEvents` handles block interaction, breaking, and placement rules.
-6. `BanStickEvents` handles Ban Stick target selection and confirmation prompts.
-7. `BanEnforcement` applies inventory, effect, dimension, and entity cleanup.
+6. `BlockBanSupport` answers block mode and item I/O queries for mixins and events.
+7. `BanStickEvents` handles Ban Stick target selection and confirmation prompts.
+8. `BanEnforcement` applies inventory, effect, dimension, and entity cleanup.
 
 ## Rule storage
 
@@ -37,6 +38,24 @@ Player whitelist affects:
 - dimension travel and forced dimension escape.
 
 Entity spawning and structure generation remain world-level rules.
+
+## Block ban enforcement
+
+`INTERACT` keeps placement and breaking available, cancels block right-click use, and
+blocks item movement. `FULL` blocks placement, removes the block on either left-click or
+right-click, and also blocks item movement.
+
+Item movement is blocked at three layers:
+
+- `CapabilityProvider` and `BaseContainerBlockEntity` mixins return an empty item handler
+  while the block is banned, covering Forge-capability pipes and machines;
+- `HopperBlockEntity` mixins stop hopper ticks, entity pickup, source extraction, and
+  destination lookup for loaded hoppers;
+- banned block entities are tracked weakly while loaded. Block rule changes invalidate
+  and revive their capabilities so cached pipe connections are refreshed.
+
+The item-handler guard applies to both block modes and to global or matching-dimension
+rules. It is a world-level rule and does not consult the player whitelist.
 
 ## GUI model
 

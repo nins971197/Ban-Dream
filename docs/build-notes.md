@@ -8,6 +8,7 @@ This document is workspace-only and is not packaged into the mod jar or source j
 - Forge 47.4.20
 - Java 17
 - Gradle 8.8
+- Mixin 0.8.5
 
 Command:
 
