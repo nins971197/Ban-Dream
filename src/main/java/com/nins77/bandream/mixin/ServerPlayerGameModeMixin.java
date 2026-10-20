@@ -2,6 +2,7 @@ package com.nins77.bandream.mixin;
 
 import com.nins77.bandream.config.BanRules;
 import com.nins77.bandream.enforce.BanEnforcement;
+import com.nins77.bandream.item.BanItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerPlayerGameMode;
@@ -41,9 +42,10 @@ public abstract class ServerPlayerGameModeMixin {
         BlockHitResult hit,
         CallbackInfoReturnable<InteractionResult> callback
     ) {
-        if (BanRules.isBlockBanned(level.getBlockState(hit.getBlockPos()).getBlock(),
-            level.dimension().location())
-            || BanEnforcement.isItemBlocked(stack, level, player)) {
+        if (!stack.is(BanItems.BAN_STICK.get())
+            && (BanRules.isBlockBanned(level.getBlockState(hit.getBlockPos()).getBlock(),
+                level.dimension().location())
+                || BanEnforcement.isItemBlocked(stack, level, player))) {
             callback.setReturnValue(InteractionResult.FAIL);
         }
     }

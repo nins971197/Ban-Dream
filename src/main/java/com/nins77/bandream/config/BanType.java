@@ -4,14 +4,14 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public enum BanType {
-    ITEM("item", true),
+    ITEM("item", false),
     ENTITY("entity", true),
-    STRUCTURE("structure", true),
-    ENCHANTMENT("enchantment", true),
+    STRUCTURE("structure", false),
+    ENCHANTMENT("enchantment", false),
     DIMENSION("dimension", false),
-    EFFECT("effect", true),
-    BLOCK("block", true),
-    NBT("nbt", true);
+    EFFECT("effect", false),
+    BLOCK("block", false),
+    NBT("nbt", false);
 
     private final String id;
     private final boolean scoped;

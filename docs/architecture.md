@@ -28,7 +28,8 @@ Writes use a temporary file followed by an atomic move when the filesystem suppo
 
 ## Scope matching
 
-Global rules match every dimension. Dimension rules match only the exact dimension ID.
+Global rules match every dimension. Only entity rules may use `DIMENSION` scope; all
+other ban types normalize to global scope, including old configurations.
 Player whitelist entries match by UUID first and then by case-insensitive player name.
 
 ## Enforcement boundaries
@@ -64,8 +65,8 @@ Item movement is blocked at three layers:
 - banned block entities are tracked weakly while loaded. Block rule changes invalidate
   and revive their capabilities so cached pipe connections are refreshed.
 
-The item-handler guard applies to global or matching-dimension block rules. It is a
-world-level rule and does not consult the player whitelist.
+The item-handler guard applies to global block rules. It is a world-level rule and does
+not consult the player whitelist.
 
 ## Performance guards
 

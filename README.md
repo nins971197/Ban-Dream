@@ -13,13 +13,13 @@ Ban Dream 用于服务器和整合包统一封禁物品、生物、结构、附�
 
 ## 功能
 
-- 物品封禁支持全局或指定维度。
+- 物品封禁只支持全局。
 - 物品封禁可选 JEI 显示或隐藏。
 - 物品封禁不删除或修改 ItemStack、物品 ID 和 NBT；只有实际使用时才阻止使用、交互和物品自身事件，并在客户端显示 `999ban` 图标。
-- 生物与结构支持全局或指定维度封禁。
-- 方块支持全局或指定维度封禁；原方块不替换，客户端方块物品图标显示为 `bakaban`。
+- 生物支持全局或指定维度封禁；结构只支持全局。
+- 方块只支持全局封禁；原方块不替换，客户端方块物品图标显示为 `bakaban`。
 - 被封禁方块禁止玩家交互、破坏、内部 tick、随机 tick、邻居更新、红石和流体调度，并拒绝漏斗、投掷器和其他 Forge 能力管道输入/输出物品。
-- 附魔与 Buff 支持全局或指定维度封禁；已存在的违规附魔/效果会被移除。
+- 附魔与 Buff 只支持全局封禁；已存在的违规附魔/效果会被移除。
 - 维度封禁会阻止传送、传送门、命令跨维度进入；已在其中的玩家会被送回可用维度。
 - NBT 封禁支持原版 NBT 路径语法和 SNBT 值匹配，可指定物品或使用 `*` 匹配任意物品。
 - `/bbban list <类型>` 查看封禁清单；物品和方块默认打开分页 GUI，其他类型输出到聊天框。
@@ -80,7 +80,7 @@ Cleanroom 当前使用 `0.7.9-alpha`。NeoForge 工程依赖官方
 ### 封禁物品
 
 ```text
-/bbban ban item [物品ID] [global|in <维度ID>] [jei show|hide] [trigger inventory|use]
+/bbban ban item [物品ID] [global] [jei show|hide] [trigger inventory|use]
 ```
 
 示例：
@@ -93,7 +93,7 @@ Cleanroom 当前使用 `0.7.9-alpha`。NeoForge 工程依赖官方
 /bbban ban item minecraft:diamond_sword in minecraft:the_nether trigger use
 ```
 
-不写 `物品ID` 时封禁主手物品。不写 `global` 或 `in <维度ID>` 时默认全局封禁。
+不写 `物品ID` 时封禁主手物品。物品封禁始终全局。
 `jei` 与 `trigger` 可以只写其中一个。若两个都写，顺序为 `jei ... trigger ...`。
 `trigger` 参数保留用于兼容旧配置，但当前所有物品封禁都只禁止使用和交互，不会删除物品。
 
@@ -101,9 +101,9 @@ Cleanroom 当前使用 `0.7.9-alpha`。NeoForge 工程依赖官方
 
 ```text
 /bbban ban entity <实体ID> [global|in <维度ID>]
-/bbban ban structure <结构ID> [global|in <维度ID>]
-/bbban ban enchantment <附魔ID> [global|in <维度ID>]
-/bbban ban effect <效果ID> [global|in <维度ID>]
+/bbban ban structure <结构ID>
+/bbban ban enchantment <附魔ID>
+/bbban ban effect <效果ID>
 ```
 
 省略范围时默认全局。
@@ -134,7 +134,7 @@ Cleanroom 当前使用 `0.7.9-alpha`。NeoForge 工程依赖官方
 ### 封禁方块
 
 ```text
-/bbban ban block <方块ID> [global|in <维度ID>]
+/bbban ban block <方块ID>
 ```
 
 方块封禁采用原位 Mixin 行为重定向，不替换 BlockState，也不移动原方块或方块实体。
@@ -150,7 +150,7 @@ Cleanroom 当前使用 `0.7.9-alpha`。NeoForge 工程依赖官方
 ### 封禁 NBT
 
 ```text
-/bbban ban nbt <物品ID|*> <NBT路径> <SNBT值|*> [global|in <维度ID>] [trigger inventory|use]
+/bbban ban nbt <物品ID|*> <NBT路径> <SNBT值|*> [global] [trigger inventory|use]
 ```
 
 NBT 路径使用原版 NBT Path 语法，例如 `CustomModelData`、`display.Name`、
@@ -173,9 +173,9 @@ NBT 路径使用原版 NBT Path 语法，例如 `CustomModelData`、`display.Nam
 
 管理员可通过该指令获得 `bandream:ban_stick`，它也会出现在创造模式“工具与实用物品”页。
 
-- 左键方块：在左侧打开选项，可选择全局禁止或当前维度禁止。
+- 左键方块：在左侧打开全局禁止选项。
 - 左键非玩家生物：在左侧打开选项，可选择全局禁止或当前维度禁止。
-- 潜行左键原版木桶：在左侧打开物品封禁选项，可选择全局/当前维度，以及直接禁止或禁止使用；一次写入桶内全部物品。
+- 潜行左键原版木桶：在左侧打开全局物品封禁选项；一次写入桶内全部物品。
 - 右键方块或非玩家生物：在右下角弹出全局解封确认框。
 - 潜行右键原版木桶：立即全局解封桶内全部物品，不弹出确认框。
 
@@ -184,17 +184,17 @@ NBT 路径使用原版 NBT Path 语法，例如 `CustomModelData`、`display.Nam
 ### 解除封禁
 
 ```text
-/bbban unban item <物品ID> [global|in <维度ID>]
+/bbban unban item <物品ID>
 /bbban unban entity <实体ID> [global|in <维度ID>]
-/bbban unban structure <结构ID> [global|in <维度ID>]
-/bbban unban enchantment <附魔ID> [global|in <维度ID>]
-/bbban unban effect <效果ID> [global|in <维度ID>]
-/bbban unban block <方块ID> [global|in <维度ID>]
+/bbban unban structure <结构ID>
+/bbban unban enchantment <附魔ID>
+/bbban unban effect <效果ID>
+/bbban unban block <方块ID>
 /bbban unban dimension <维度ID>
 /bbban unban nbt <物品ID|*> [path <NBT路径> [value <SNBT值>]]
 ```
 
-不写 `global` / `in <维度ID>` 时会删除该 ID 的所有范围记录。
+不写范围时会删除该 ID 的所有规则；`in <维度ID>` 只适用于生物。
 
 ### 查看清单
 
@@ -211,13 +211,13 @@ NBT 路径使用原版 NBT Path 语法，例如 `CustomModelData`、`display.Nam
 
 物品和方块清单默认打开分页 GUI，加 `book` 会生成成书。其他类型直接输出到聊天框，
 加 `book` 会生成成书。方块 GUI 使用方块物品图标；没有物品形式的方块使用屏障图标，
-鼠标悬停可查看封禁维度；物品图标还会显示处理方式和 JEI 状态。
+鼠标悬停可查看封禁信息；只有生物规则会显示维度范围。
 
 左键物品或方块图标会打开管理面板：
 
 - 方块可选择“禁止（全局）”或“解封”。
 - 物品可选择“禁止（全局）”或“解封”。
-- 解封会移除该 ID 的全局和维度规则。
+- 解封会移除该 ID 的所有匹配规则；生物的维度规则也会被清除。
 
 ### 重载配置
 
@@ -282,8 +282,8 @@ config/bandream/bans.json
 | --- | --- |
 | `type` | `ITEM`、`ENTITY`、`STRUCTURE`、`ENCHANTMENT`、`DIMENSION`、`EFFECT`、`BLOCK`、`NBT` |
 | `id` | 注册名；NBT 类型可使用 `*` 表示任意物品 |
-| `scope` | `GLOBAL` 或 `DIMENSION` |
-| `dimension` | `DIMENSION` 范围时填写维度 ID |
+| `scope` | `GLOBAL`；只有 `ENTITY` 可使用 `DIMENSION` |
+| `dimension` | 仅 `ENTITY` 的 `DIMENSION` 范围填写维度 ID |
 | `jeiVisible` | 仅物品使用；`false` 时从 JEI 隐藏 |
 | `trigger` | `INVENTORY` 或 `USE` |
 | `path` | 仅 NBT 使用；原版 NBT 路径 |
@@ -301,10 +301,8 @@ JSON 中 `type`、`scope`、`trigger` 不区分大小写。修改文件后执行
 - 方块保持原 BlockState、方块实体和世界外观；旧的 `bakaban` 方块只用于旧存档迁移。
 - `bakaban` 物品最大堆叠数为 1。
 - 方块解封只删除规则，不需要恢复方块或容器快照。
-- 被封禁方块拒绝漏斗、投掷器和 Forge 能力管道的物品输入/输出；规则可全局生效，
-  也可限定维度。
-- `/bbban list block` 打开方块封禁分页页面；同一方块的多个维度会合并显示在同一个
-  图标下，悬浮提示列出被封禁维度。
+- 被封禁方块拒绝漏斗、投掷器和 Forge 能力管道的物品输入/输出；方块规则始终全局。
+- `/bbban list block` 打开方块封禁分页页面；方块规则不再带维度区分。
 - `/bbban list item` 或 `/bbban list block` 中左键图标可管理封禁或解封，执行后会
   重新打开对应清单页面。
 - 附魔封禁会从玩家物品中移除违规附魔；Buff 封禁会移除玩家与生物的违规效果。

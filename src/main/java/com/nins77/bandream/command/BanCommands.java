@@ -81,12 +81,10 @@ public final class BanCommands {
         LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal("item");
         addItemOptions(root, BanCommands::banHeldItem, BanScope.GLOBAL);
         root.then(itemGlobal(BanCommands::banHeldItem));
-        root.then(itemDimension(BanCommands::banHeldItem));
 
         var id = Commands.argument("id", ResourceLocationArgument.id()).suggests(ITEM_IDS);
         addItemOptions(id, BanCommands::banItem, BanScope.GLOBAL);
         id.then(itemGlobal(BanCommands::banItem));
-        id.then(itemDimension(BanCommands::banItem));
         root.then(id);
         return root;
     }
@@ -123,12 +121,6 @@ public final class BanCommands {
         LiteralArgumentBuilder<CommandSourceStack> global = Commands.literal("global");
         addItemOptions(global, action, BanScope.GLOBAL);
         return global;
-    }
-
-    private static LiteralArgumentBuilder<CommandSourceStack> itemDimension(ItemBanCommand action) {
-        var dimension = Commands.argument("dimension", ResourceLocationArgument.id()).suggests(DIMENSION_IDS);
-        addItemOptions(dimension, action, BanScope.DIMENSION);
-        return Commands.literal("in").then(dimension);
     }
 
     private static int banHeldItem(
@@ -181,9 +173,11 @@ public final class BanCommands {
         var id = Commands.argument("id", ResourceLocationArgument.id()).suggests(suggestions);
         id.executes(context -> banSimple(context, type, BanScope.GLOBAL));
         id.then(Commands.literal("global").executes(context -> banSimple(context, type, BanScope.GLOBAL)));
-        var dimension = Commands.argument("dimension", ResourceLocationArgument.id()).suggests(DIMENSION_IDS)
-            .executes(context -> banSimple(context, type, BanScope.DIMENSION));
-        id.then(Commands.literal("in").then(dimension));
+        if (type == BanType.ENTITY) {
+            var dimension = Commands.argument("dimension", ResourceLocationArgument.id()).suggests(DIMENSION_IDS)
+                .executes(context -> banSimple(context, type, BanScope.DIMENSION));
+            id.then(Commands.literal("in").then(dimension));
+        }
         return Commands.literal(literal).then(id);
     }
 
@@ -213,16 +207,7 @@ public final class BanCommands {
     private static LiteralArgumentBuilder<CommandSourceStack> blockBan() {
         var id = Commands.argument("id", ResourceLocationArgument.id()).suggests(BLOCK_IDS);
         id.executes(context -> banBlock(context, BanScope.GLOBAL));
-
-        LiteralArgumentBuilder<CommandSourceStack> global = Commands.literal("global")
-            .executes(context -> banBlock(context, BanScope.GLOBAL));
-
-        var dimension = Commands.argument("dimension", ResourceLocationArgument.id())
-            .suggests(DIMENSION_IDS)
-            .executes(context -> banBlock(context, BanScope.DIMENSION));
-
-        id.then(global);
-        id.then(Commands.literal("in").then(dimension));
+        id.then(Commands.literal("global").executes(context -> banBlock(context, BanScope.GLOBAL)));
         return Commands.literal("block").then(id);
     }
 
@@ -264,13 +249,7 @@ public final class BanCommands {
         var global = Commands.literal("global")
             .executes(context -> banNbt(context, fixedId, BanScope.GLOBAL, BanTrigger.INVENTORY));
         global.then(nbtTriggerOnly(fixedId, BanScope.GLOBAL));
-
-        var dimension = Commands.argument("dimension", ResourceLocationArgument.id())
-            .suggests(DIMENSION_IDS)
-            .executes(context -> banNbt(context, fixedId, BanScope.DIMENSION, BanTrigger.INVENTORY));
-        dimension.then(nbtTriggerOnly(fixedId, BanScope.DIMENSION));
-
-        valueNode.then(global).then(Commands.literal("in").then(dimension));
+        valueNode.then(global);
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> nbtTriggerOnly(String fixedId, BanScope scope) {
@@ -339,10 +318,12 @@ public final class BanCommands {
             .suggests(suggestions)
             .executes(context -> unbanSimple(context, type, null, null));
         id.then(Commands.literal("global").executes(context -> unbanSimple(context, type, BanScope.GLOBAL, null)));
-        id.then(Commands.literal("in").then(Commands.argument("dimension", ResourceLocationArgument.id())
-            .suggests(DIMENSION_IDS)
-            .executes(context -> unbanSimple(context, type, BanScope.DIMENSION,
-                ResourceLocationArgument.getId(context, "dimension").toString()))));
+        if (type == BanType.ENTITY) {
+            id.then(Commands.literal("in").then(Commands.argument("dimension", ResourceLocationArgument.id())
+                .suggests(DIMENSION_IDS)
+                .executes(context -> unbanSimple(context, type, BanScope.DIMENSION,
+                    ResourceLocationArgument.getId(context, "dimension").toString()))));
+        }
         return Commands.literal(literal).then(id);
     }
 
@@ -520,18 +501,21 @@ public final class BanCommands {
         CommandSourceStack source = context.getSource();
         source.sendSystemMessage(Component.literal("==== Ban Dream /bbban ====").withStyle(ChatFormatting.GOLD));
         source.sendSystemMessage(Component.literal(
-            "/bbban ban item [物品] [global|in <维度>] [jei show|hide] [trigger inventory|use]")
+            "/bbban ban item [物品] [jei show|hide] [trigger inventory|use]")
             .withStyle(ChatFormatting.GRAY));
         source.sendSystemMessage(Component.literal(
-            "/bbban ban entity|structure|enchantment|effect <ID> [global|in <维度>]")
+            "/bbban ban entity <ID> [global|in <维度>]")
             .withStyle(ChatFormatting.GRAY));
         source.sendSystemMessage(Component.literal(
-            "/bbban ban block <方块ID> [global|in <维度>]")
+            "/bbban ban structure|enchantment|effect <ID>")
+            .withStyle(ChatFormatting.GRAY));
+        source.sendSystemMessage(Component.literal(
+            "/bbban ban block <方块ID>")
             .withStyle(ChatFormatting.GRAY));
         source.sendSystemMessage(Component.literal(
             "/bbban ban dimension <维度>").withStyle(ChatFormatting.GRAY));
         source.sendSystemMessage(Component.literal(
-            "/bbban ban nbt <物品|*> <NBT路径> <SNBT值|*> [global|in <维度>] [trigger inventory|use]")
+            "/bbban ban nbt <物品|*> <NBT路径> <SNBT值|*> [trigger inventory|use]")
             .withStyle(ChatFormatting.GRAY));
         source.sendSystemMessage(Component.literal(
             "不写物品 ID 时封禁主手物品；不写范围时默认全局")
@@ -540,7 +524,10 @@ public final class BanCommands {
             "物品封禁只禁止使用、交互和物品自身事件，不删除物品")
             .withStyle(ChatFormatting.DARK_GRAY));
         source.sendSystemMessage(Component.literal(
-            "/bbban unban <类型> <ID> [global|in <维度>]").withStyle(ChatFormatting.GRAY));
+            "除生物外，所有封禁类型均为全局规则")
+            .withStyle(ChatFormatting.DARK_GRAY));
+        source.sendSystemMessage(Component.literal(
+            "/bbban unban <类型> <ID> [仅生物可 in <维度>]").withStyle(ChatFormatting.GRAY));
         source.sendSystemMessage(Component.literal(
             "/bbban list <类型> [book]  — 物品/方块默认打开分页 GUI，book 生成成书")
             .withStyle(ChatFormatting.GRAY));

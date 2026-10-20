@@ -13,8 +13,7 @@
     {
       "type": "item",
       "id": "minecraft:diamond_sword",
-      "scope": "dimension",
-      "dimension": "minecraft:the_nether",
+      "scope": "global",
       "jeiVisible": true,
       "trigger": "use"
     },
@@ -26,8 +25,7 @@
     {
       "type": "structure",
       "id": "minecraft:village_plains",
-      "scope": "dimension",
-      "dimension": "minecraft:overworld"
+      "scope": "global"
     },
     {
       "type": "enchantment",
@@ -47,8 +45,7 @@
     {
       "type": "block",
       "id": "minecraft:barrel",
-      "scope": "dimension",
-      "dimension": "minecraft:overworld"
+      "scope": "global"
     },
     {
       "type": "nbt",
@@ -61,8 +58,7 @@
     {
       "type": "nbt",
       "id": "*",
-      "scope": "dimension",
-      "dimension": "minecraft:overworld",
+      "scope": "global",
       "trigger": "use",
       "path": "display.Name",
       "value": "\"Server Blocked\""

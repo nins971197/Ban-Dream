@@ -21,14 +21,12 @@ import net.minecraft.server.level.ServerPlayer;
 
 public final class BanActionHandler {
     private static final List<String> BLOCK_OPTIONS = List.of(
-        "全局禁止",
-        "当前维度禁止");
+        "全局禁止");
     private static final List<String> ENTITY_OPTIONS = List.of(
         "全局禁止",
         "当前维度禁止");
     private static final List<String> ITEM_OPTIONS = List.of(
-        "全局禁止",
-        "当前维度禁止");
+        "全局禁止");
     private static final List<String> CONFIRM_OPTIONS = List.of("确认解封");
 
     private BanActionHandler() {
@@ -131,11 +129,11 @@ public final class BanActionHandler {
         PendingActionManager.Action action,
         int choice
     ) throws IOException {
-        if (choice > 1 || action.ids().isEmpty()) {
+        if (choice != 0 || action.ids().isEmpty()) {
             BanEnforcement.notify(player, "无效的封禁选项");
             return;
         }
-        BanScope scope = choice == 0 ? BanScope.GLOBAL : BanScope.DIMENSION;
+        BanScope scope = BanScope.GLOBAL;
         String id = action.ids().get(0);
         BanRules.ban(blockEntry(id, scope, dimension(player, scope)));
         BanEnforcement.afterRulesChanged(player.server, false, true);
@@ -163,11 +161,11 @@ public final class BanActionHandler {
         PendingActionManager.Action action,
         int choice
     ) throws IOException {
-        if (choice > 1 || action.ids().isEmpty()) {
+        if (choice != 0 || action.ids().isEmpty()) {
             BanEnforcement.notify(player, "无效的封禁选项");
             return;
         }
-        BanScope scope = choice == 0 ? BanScope.GLOBAL : BanScope.DIMENSION;
+        BanScope scope = BanScope.GLOBAL;
         String dimension = dimension(player, scope);
         List<BanEntry> entries = new ArrayList<>(action.ids().size());
         for (String id : action.ids()) {
