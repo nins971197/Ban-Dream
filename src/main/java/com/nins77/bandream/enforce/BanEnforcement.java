@@ -21,7 +21,6 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
@@ -95,8 +94,7 @@ public final class BanEnforcement {
         if (BanRules.isItemBanned(stack, dimension)) {
             return true;
         }
-        return stack.getItem() instanceof BlockItem blockItem
-            && BanRules.isBlockBanned(blockItem.getBlock(), dimension);
+        return false;
     }
 
     public static boolean stripBannedEnchantments(ServerPlayer player, ItemStack stack, ResourceLocation dimension) {

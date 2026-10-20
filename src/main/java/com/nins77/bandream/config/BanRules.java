@@ -496,14 +496,6 @@ public final class BanRules {
         return matchesNbtEntry(entry, stack);
     }
 
-    public static List<BanEntry> visualEntries() {
-        return banIndex.entries().stream()
-            .filter(entry -> entry.type == BanType.ITEM
-                || entry.type == BanType.BLOCK
-                || entry.type == BanType.NBT)
-            .toList();
-    }
-
     public static boolean hasAnyItemRules() {
         return hasInventoryItemRules || hasUseItemRules;
     }

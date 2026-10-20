@@ -4,10 +4,10 @@
 - Added `/bbban ban block`.
 - Ban Stick left-click now selects blocks for confirmation.
 - Block bans now use Mixin redirection while keeping the original block state and world model.
-- Banned block items display the `bakaban` icon without changing ItemStack or registry data.
-- Added the `999ban` display item and dynamic icon redirection for banned items.
+- Banned items and blocks keep their original icons and models.
+- The `999ban` display item remains available as a resource but is not applied automatically.
 - Item bans now disable use, interaction and item callbacks without deleting or mutating items.
-- Banned blocks disable player use, destruction, block/entity ticks, neighbor updates, random ticks and fluid ticks.
+- Banned blocks allow destruction and placement while disabling right-click use, block/entity ticks, neighbor updates, random ticks and fluid ticks.
 - Block-entity tick suppression uses the chunk ticker wrapper to coexist with other mods that redirect `Level.tickBlockEntities`.
 - Dimension scope is now restricted to entities; old non-entity dimension rules normalize to global.
 - Ban Stick actions are excluded from the block-use guard so right-click unban prompts can open correctly.

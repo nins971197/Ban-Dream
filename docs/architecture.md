@@ -46,11 +46,11 @@ Entity spawning and structure generation remain world-level rules.
 ## Block ban enforcement
 
 Block rules now leave the original block and BlockEntity in place. The server-side
-`ServerPlayerGameModeMixin` rejects player use and destruction,
-`LevelChunkTickerMixin` suppresses block entity ticks, `LevelMixin` suppresses neighbor
-updates, and `ServerLevelMixin` suppresses scheduled, random, and fluid ticks. The client
-renders banned block items with the `bakaban` model; the placed block model and world
-state are unchanged.
+`ServerPlayerGameModeMixin` rejects right-click use while allowing destruction and
+placement, `LevelChunkTickerMixin` suppresses block entity ticks, `LevelMixin` suppresses
+neighbor updates, and `ServerLevelMixin` suppresses scheduled, random, and fluid ticks.
+The client keeps the original block and item models; no visual model redirection is
+performed.
 
 The old `bakaban` marker and `BakabanSavedData` remain only as a legacy migration path.
 On startup and chunk load, old snapshots are restored to their original blocks and

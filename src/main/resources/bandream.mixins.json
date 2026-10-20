@@ -15,9 +15,7 @@
     "ServerPlayerGameModeMixin",
     "StructureStartMixin"
   ],
-  "client": [
-    "client.ItemRendererMixin"
-  ],
+  "client": [],
   "server": [],
   "injectors": {
     "defaultRequire": 1

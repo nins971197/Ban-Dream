@@ -26,9 +26,7 @@ public abstract class ServerPlayerGameModeMixin {
 
     @Inject(method = "destroyBlock", at = @At("HEAD"), cancellable = true)
     private void bandream$blockDestroy(BlockPos pos, CallbackInfoReturnable<Boolean> callback) {
-        if (BanRules.isBlockBanned(player.level().getBlockState(pos).getBlock(),
-            player.level().dimension().location())
-            || BanEnforcement.isItemBlocked(player.getMainHandItem(), player.level(), player)) {
+        if (BanEnforcement.isItemBlocked(player.getMainHandItem(), player.level(), player)) {
             callback.setReturnValue(false);
         }
     }
