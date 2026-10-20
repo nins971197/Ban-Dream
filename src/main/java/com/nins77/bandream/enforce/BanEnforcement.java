@@ -3,15 +3,11 @@ package com.nins77.bandream.enforce;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.nins77.bandream.block.BakabanManager;
 import com.nins77.bandream.compat.CuriosCompat;
-import com.nins77.bandream.config.BanEntry;
 import com.nins77.bandream.config.BanRules;
-import com.nins77.bandream.config.BanTrigger;
 import com.nins77.bandream.network.BanNetwork;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -25,6 +21,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
@@ -42,31 +39,17 @@ public final class BanEnforcement {
             return;
         }
         ResourceLocation dimension = player.level().dimension().location();
-        boolean scanInventoryItems = BanRules.hasItemRules(BanTrigger.INVENTORY);
-        boolean scanCuriosItems = scanInventoryItems || BanRules.hasItemRules(BanTrigger.USE);
         boolean scanEnchantments = fullCheck && BanRules.hasEnchantmentRules();
         boolean changed = false;
 
-        if (scanInventoryItems || scanEnchantments) {
-            changed |= scanCompartment(
-                player, player.getInventory().items, dimension, scanInventoryItems, scanEnchantments);
-            changed |= scanCompartment(
-                player, player.getInventory().armor, dimension, scanInventoryItems, scanEnchantments);
-            changed |= scanCompartment(
-                player, player.getInventory().offhand, dimension, scanInventoryItems, scanEnchantments);
+        if (scanEnchantments) {
+            changed |= scanCompartment(player, player.getInventory().items, dimension);
+            changed |= scanCompartment(player, player.getInventory().armor, dimension);
+            changed |= scanCompartment(player, player.getInventory().offhand, dimension);
         }
 
-        ItemStack carried = player.containerMenu.getCarried();
-        if (scanInventoryItems && !carried.isEmpty()) {
-            Optional<BanEntry> banned = BanRules.findItem(carried, dimension, BanTrigger.INVENTORY);
-            if (banned.isPresent()) {
-                player.containerMenu.setCarried(ItemStack.EMPTY);
-                changed = true;
-            }
-        }
-
-        if (fullCheck && (scanCuriosItems || scanEnchantments) && ModList.get().isLoaded("curios")) {
-            changed |= CuriosCompat.enforce(player, dimension, scanCuriosItems, scanEnchantments);
+        if (scanEnchantments && ModList.get().isLoaded("curios")) {
+            changed |= CuriosCompat.enforce(player, dimension, false, true);
         }
 
         if (fullCheck && BanRules.hasEffectRules() && !player.getActiveEffects().isEmpty()) {
@@ -87,9 +70,7 @@ public final class BanEnforcement {
     private static boolean scanCompartment(
         ServerPlayer player,
         NonNullList<ItemStack> compartment,
-        ResourceLocation dimension,
-        boolean scanItems,
-        boolean scanEnchantments
+        ResourceLocation dimension
     ) {
         boolean changed = false;
         for (int index = 0; index < compartment.size(); index++) {
@@ -97,14 +78,7 @@ public final class BanEnforcement {
             if (stack.isEmpty()) {
                 continue;
             }
-            if (scanItems && BanRules.findItem(stack, dimension, BanTrigger.INVENTORY).isPresent()) {
-                String name = stack.getHoverName().getString();
-                compartment.set(index, ItemStack.EMPTY);
-                changed = true;
-                notify(player, "已移除封禁物品: " + name);
-                continue;
-            }
-            if (scanEnchantments && stripBannedEnchantments(player, stack, dimension)) {
+            if (stripBannedEnchantments(player, stack, dimension)) {
                 changed = true;
                 notify(player, "已移除封禁附魔: " + stack.getHoverName().getString());
             }
@@ -112,9 +86,22 @@ public final class BanEnforcement {
         return changed;
     }
 
+    public static boolean isItemBlocked(ItemStack stack, Level level, Player player) {
+        if (stack.isEmpty() || level == null || level.isClientSide
+            || (player != null && BanRules.isPlayerWhitelisted(player))) {
+            return false;
+        }
+        ResourceLocation dimension = level.dimension().location();
+        if (BanRules.isItemBanned(stack, dimension)) {
+            return true;
+        }
+        return stack.getItem() instanceof BlockItem blockItem
+            && BanRules.isBlockBanned(blockItem.getBlock(), dimension);
+    }
+
     public static boolean stripBannedEnchantments(ServerPlayer player, ItemStack stack, ResourceLocation dimension) {
         if (BanRules.isPlayerWhitelisted(player) || !BanRules.hasEnchantmentRules()
-            || stack.isEmpty() || !stack.isEnchanted()) {
+            || stack.isEmpty() || BanRules.isItemBanned(stack, dimension) || !stack.isEnchanted()) {
             return false;
         }
         Map<Enchantment, Integer> enchantments = EnchantmentHelper.getEnchantments(stack);
@@ -128,54 +115,18 @@ public final class BanEnforcement {
     }
 
     public static boolean enforceUse(ServerPlayer player, ItemStack held) {
-        if (BanRules.isPlayerWhitelisted(player) || held.isEmpty()
-            || (!BanRules.hasItemRules(BanTrigger.USE) && !BanRules.hasEnchantmentRules())) {
+        if (BanRules.isPlayerWhitelisted(player) || held.isEmpty()) {
             return false;
         }
         ResourceLocation dimension = player.level().dimension().location();
-        if (BanRules.hasItemRules(BanTrigger.USE)) {
-            Optional<BanEntry> direct = BanRules.findItem(held, dimension, BanTrigger.USE);
-            if (direct.isPresent()) {
-                removeUseBannedItems(player, dimension);
-                return true;
-            }
+        if (isItemBlocked(held, player.level(), player)) {
+            return true;
         }
         if (stripBannedEnchantments(player, held, dimension)) {
             notify(player, "该物品携带封禁附魔，已阻止使用");
             return true;
         }
         return false;
-    }
-
-    public static int removeUseBannedItems(ServerPlayer player, ResourceLocation dimension) {
-        if (BanRules.isPlayerWhitelisted(player) || !BanRules.hasItemRules(BanTrigger.USE)) {
-            return 0;
-        }
-        int removed = 0;
-        String lastName = "";
-        for (NonNullList<ItemStack> compartment : List.of(
-            player.getInventory().items,
-            player.getInventory().armor,
-            player.getInventory().offhand)) {
-            for (int index = 0; index < compartment.size(); index++) {
-                ItemStack stack = compartment.get(index);
-                if (!stack.isEmpty() && BanRules.findItem(stack, dimension, BanTrigger.USE).isPresent()) {
-                    lastName = stack.getHoverName().getString();
-                    compartment.set(index, ItemStack.EMPTY);
-                    removed++;
-                }
-            }
-        }
-        ItemStack carried = player.containerMenu.getCarried();
-        if (!carried.isEmpty() && BanRules.findItem(carried, dimension, BanTrigger.USE).isPresent()) {
-            player.containerMenu.setCarried(ItemStack.EMPTY);
-            removed++;
-        }
-        if (removed > 0) {
-            player.getInventory().setChanged();
-            notify(player, "已移除封禁物品: " + lastName);
-        }
-        return removed;
     }
 
     public static void enforceLivingEffects(LivingEntity entity) {
@@ -251,9 +202,10 @@ public final class BanEnforcement {
     ) {
         if (refreshBlockCapabilities) {
             BlockBanSupport.refreshItemCapabilities();
-            BakabanManager.refresh(server);
         }
-        BanNetwork.syncAll();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            BanNetwork.sync(player);
+        }
         boolean entityRules = purgeEntities && BanRules.hasEntityRules();
         boolean effectRules = BanRules.hasEffectRules();
         if (entityRules || effectRules) {

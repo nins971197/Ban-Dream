@@ -537,6 +537,9 @@ public final class BanCommands {
             "不写物品 ID 时封禁主手物品；不写范围时默认全局")
             .withStyle(ChatFormatting.DARK_GRAY));
         source.sendSystemMessage(Component.literal(
+            "物品封禁只禁止使用、交互和物品自身事件，不删除物品")
+            .withStyle(ChatFormatting.DARK_GRAY));
+        source.sendSystemMessage(Component.literal(
             "/bbban unban <类型> <ID> [global|in <维度>]").withStyle(ChatFormatting.GRAY));
         source.sendSystemMessage(Component.literal(
             "/bbban list <类型> [book]  — 物品/方块默认打开分页 GUI，book 生成成书")

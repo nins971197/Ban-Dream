@@ -28,9 +28,7 @@ public final class BanActionHandler {
         "当前维度禁止");
     private static final List<String> ITEM_OPTIONS = List.of(
         "全局禁止",
-        "全局禁止使用",
-        "当前维度禁止",
-        "当前维度禁止使用");
+        "当前维度禁止");
     private static final List<String> CONFIRM_OPTIONS = List.of("确认解封");
 
     private BanActionHandler() {
@@ -165,23 +163,22 @@ public final class BanActionHandler {
         PendingActionManager.Action action,
         int choice
     ) throws IOException {
-        if (choice > 3 || action.ids().isEmpty()) {
+        if (choice > 1 || action.ids().isEmpty()) {
             BanEnforcement.notify(player, "无效的封禁选项");
             return;
         }
-        BanScope scope = choice < 2 ? BanScope.GLOBAL : BanScope.DIMENSION;
-        BanTrigger trigger = (choice & 1) == 0 ? BanTrigger.INVENTORY : BanTrigger.USE;
+        BanScope scope = choice == 0 ? BanScope.GLOBAL : BanScope.DIMENSION;
         String dimension = dimension(player, scope);
         List<BanEntry> entries = new ArrayList<>(action.ids().size());
         for (String id : action.ids()) {
-            BanEntry entry = itemEntry(id, scope, dimension, trigger);
+            BanEntry entry = itemEntry(id, scope, dimension, BanTrigger.INVENTORY);
             entry.jeiVisible = !BanRules.hiddenJeiItems().contains(id);
             entries.add(entry);
         }
         BanRules.banAll(entries);
         BanEnforcement.afterRulesChanged(player.server, false, false);
         BanEnforcement.notify(player, "已封禁木桶内 " + entries.size() + " 种物品："
-            + scopeText(scope) + "，" + BanText.trigger(entries.get(0)));
+            + scopeText(scope));
     }
 
     private static void applyUnban(
@@ -205,7 +202,7 @@ public final class BanActionHandler {
         PendingActionManager.Action action,
         int choice
     ) throws IOException {
-        int maxChoice = action.type() == BanType.BLOCK ? 1 : 2;
+        int maxChoice = 1;
         if (choice > maxChoice || action.ids().isEmpty()) {
             return;
         }
@@ -224,7 +221,7 @@ public final class BanActionHandler {
             BanEnforcement.notify(player, "已设置方块 " + id + "：全局禁止");
             return;
         }
-        if (choice == 2) {
+        if (choice == 1) {
             int removed = BanRules.unban(action.type(), id, null, null);
             BanEnforcement.afterRulesChanged(player.server, false, action.type() == BanType.BLOCK);
             BanEnforcement.notify(player, removed == 0
@@ -233,8 +230,7 @@ public final class BanActionHandler {
             return;
         }
         if (action.type() == BanType.ITEM) {
-            BanTrigger trigger = choice == 0 ? BanTrigger.USE : BanTrigger.INVENTORY;
-            BanEntry entry = itemEntry(id, BanScope.GLOBAL, null, trigger);
+            BanEntry entry = itemEntry(id, BanScope.GLOBAL, null, BanTrigger.INVENTORY);
             entry.jeiVisible = !BanRules.hiddenJeiItems().contains(id);
             BanRules.ban(entry);
             BanEnforcement.afterRulesChanged(player.server, false, false);

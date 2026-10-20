@@ -7,13 +7,15 @@ This document is workspace-only and is not packaged into the mod jar.
 1. Commands create `BanEntry` rules or pending actions.
 2. `BanRules` validates, sorts, indexes, and writes rules to `config/bandream/bans.json`.
 3. `RuleIndex` provides type-and-ID lookups without scanning the full rule list.
-4. `BanEvents` handles item, entity, effect, enchantment, and dimension enforcement.
-5. `BlockBanEvents` handles block interaction, breaking, and placement rules.
+4. `BanEvents` handles effect, enchantment, dimension, and fallback interaction enforcement.
+5. `BlockBanEvents` handles block interaction and breaking cancellation.
 6. `BlockBanSupport` answers item I/O queries for mixins and events.
 7. `BanStickEvents` selects Ban Stick targets and opens server-validated option panels.
 8. `BanActionHandler` maps client choices to ban or unban operations.
-9. `BanEnforcement` applies inventory, effect, dimension, and entity cleanup.
-10. `PlayerInventoryMixin` intercepts server-side `Inventory.add` and `Inventory.setItem`.
+9. `BanEnforcement` applies effect, dimension, entity, and enchantment cleanup.
+10. `ItemStackMixin` blocks item use and special item callbacks on the server.
+11. `LevelMixin` and `ServerLevelMixin` suppress banned block ticks and updates.
+12. `ServerPlayerGameModeMixin` blocks player interaction and destruction.
 
 ## Rule storage
 
@@ -33,8 +35,7 @@ Player whitelist entries match by UUID first and then by case-insensitive player
 
 Player whitelist affects:
 
-- inventory item deletion;
-- use and interaction removal;
+- item use and interaction blocking;
 - enchantment cleanup;
 - mob effect cleanup;
 - dimension travel and forced dimension escape.
@@ -43,11 +44,15 @@ Entity spawning and structure generation remain world-level rules.
 
 ## Block ban enforcement
 
-Block rules now redirect protected blocks to `bandream:bakaban`. The redirect stores the
-original block state and block entity NBT in per-dimension world saved data. Loaded
-chunks are scanned in a bounded queue; unloaded chunks are restored or redirected when
-loaded. Breaking a bakaban does not remove the saved snapshot, and unbanned blocks are
-restored by chunk processing or by interacting with the bakaban.
+Block rules now leave the original block and BlockEntity in place. The server-side
+`ServerPlayerGameModeMixin` rejects player use and destruction, `LevelMixin` suppresses
+block entity ticks and neighbor updates, and `ServerLevelMixin` suppresses scheduled,
+random, and fluid ticks. The client renders banned block items with the `bakaban` model;
+the placed block model and world state are unchanged.
+
+The old `bakaban` marker and `BakabanSavedData` remain only as a legacy migration path.
+On startup and chunk load, old snapshots are restored to their original blocks and
+removed from storage. New block bans do not create markers or snapshots.
 
 Item movement is blocked at three layers:
 
@@ -63,13 +68,11 @@ world-level rule and does not consult the player whitelist.
 
 ## Performance guards
 
-Rule types with no entries are skipped before registry and index work. Player inventory
-insertion is checked by `PlayerInventoryMixin`; login, dimension changes, container close,
-pickup, crafting, smelting and equipment changes provide event-driven fallback checks.
-Effect additions are handled by `MobEffectEvent.Added`, and Curios changes by
-`CurioChangeEvent`. Block or structure events exit before registry lookup when their rule
-type is empty. Block scans process at most 8192 cells and 128 redirects per tick. Hopper
-ticks check only the source, self and actual output side.
+Rule types with no entries are skipped before registry and index work. Item use is
+checked at the `ItemStack` interaction and callback boundaries, not by periodic
+inventory scans. Effect additions are handled by `MobEffectEvent.Added`, and Curios
+changes by `CurioChangeEvent`. Block behavior is checked at central tick and update
+entry points. Hopper ticks check only the source, self and actual output side.
 
 Measured query costs and rough server-load estimates are recorded in
 `docs/performance.md`.
@@ -101,5 +104,5 @@ dependency.
 ## Optional Curios integration
 
 `CuriosCompat` is compiled against the Curios API but is only registered when Curios is
-loaded. Curio change events scan normal and cosmetic stacks, remove banned items and strip
-banned enchantments. Curios is not a required dependency.
+loaded. Curio change events can strip banned enchantments, but item bans never remove
+curio stacks. Curios is not a required dependency.

@@ -17,6 +17,8 @@ public final class BanItems {
 
     public static final RegistryObject<Item> BAN_STICK =
         ITEMS.register("ban_stick", BanStickItem::new);
+    public static final RegistryObject<Item> BAN_999 =
+        ITEMS.register("999ban", () -> new Item(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> BAKABAN =
         ITEMS.register("bakaban",
             () -> new BlockItem(BanBlocks.BAKABAN.get(), new Item.Properties().stacksTo(1)));
@@ -31,6 +33,7 @@ public final class BanItems {
     public static void addCreative(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
             event.accept(BAN_STICK.get());
+            event.accept(BAN_999.get());
             event.accept(BAKABAN.get());
         }
     }

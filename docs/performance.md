@@ -31,14 +31,14 @@ rule count, NBT rules, modded pipes, entity count and chunk load.
 | --- | --- |
 | No active item/block/entity rules, 100 players | under 0.01 ms per tick |
 | Item bans, 100 players, normal inventories | usually under 0.01 ms per tick |
-| Item bans with many NBT rules, 100 players | roughly 0.05-0.3 ms per tick |
+| Item bans with many NBT rules, 100 players | only uses/interactions, no periodic scan |
 | Block bans, 1,000 loaded hoppers | roughly 0.1-0.5 ms per tick |
 | Block bans, 10,000 loaded hoppers | roughly 1-5 ms per tick |
-| Block scanning during initial load | bounded to 8192 cells and 128 redirects per tick |
-| Curios checks, 100 players | only on curio changes or login/rule refresh |
+| Block behavior checks | one rule lookup per relevant tick or update |
+| Curios checks, 100 players | only on curio changes or enchantment refresh |
 
-The five-tick inventory scan was removed. Normal inventory insertion is checked at the
-`Inventory.add`/`Inventory.setItem` boundary, with event-driven fallback checks on login,
-dimension change, container close, pickup, crafting, smelting and equipment changes.
-Block scans are incremental and bounded; the redirect cap is the main source of tick
-spikes when a common block is banned across a large loaded area.
+Player inventory insertion is no longer checked at all, because item bans do not modify
+ItemStack data. Item use is checked at `ItemStack` interaction and callback entry points.
+Block bans are checked at central server tick/update entry points instead of scanning
+world blocks. The main additional cost is one block-ID rule lookup for each relevant
+block entity tick or update, plus capability checks for item transport.

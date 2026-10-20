@@ -250,7 +250,7 @@ public final class BanListMenu extends AbstractContainerMenu {
         }
         List<String> options = type == BanType.BLOCK
             ? List.of("禁止（全局）", "解封")
-            : List.of("禁止使用/交互（全局）", "直接禁止（全局）", "解封");
+            : List.of("禁止（全局）", "解封");
         player.closeContainer();
         int actionId = PendingActionManager.offer(
             player, PendingActionManager.Kind.LIST_ENTRY, type, List.of(group.id()));

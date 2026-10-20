@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.nins77.bandream.config.BanEntry;
 import com.nins77.bandream.config.BanScope;
-import com.nins77.bandream.config.BanTrigger;
 import com.nins77.bandream.config.BanType;
 
 public final class BanText {
@@ -43,7 +42,7 @@ public final class BanText {
     }
 
     public static String trigger(BanEntry entry) {
-        return entry.trigger == BanTrigger.USE ? "使用/交互时删除" : "进入背包时删除";
+        return "禁止使用和交互";
     }
 
     public static String line(BanEntry entry) {

@@ -15,9 +15,9 @@ Server-side administration for banning items, blocks, entities, structures, ench
 dimensions, mob effects and item NBT. Bans support global or per-dimension scope,
 an optional paginated item and block browser, written-book exports and editable JSON config.
 A Ban Stick provides option panels for blocks, mobs and barrel contents.
-Block bans redirect protected blocks to a restricted block and restore saved state on unban.
+Item and block bans use server-side redirection hooks while preserving ItemStack and world block data.
 Player whitelist entries exempt selected players from player-facing restrictions.
-Optional Curios integration also removes banned items from equipped curio slots.
+Optional Curios integration checks curio enchantments without deleting curio stacks.
 
 Commands:
 /bbban ban ...    create or update a ban

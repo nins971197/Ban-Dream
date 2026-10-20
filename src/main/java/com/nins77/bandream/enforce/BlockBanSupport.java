@@ -39,6 +39,13 @@ public final class BlockBanSupport {
         return BanRules.isBlockBanned(id, level.dimension().location());
     }
 
+    public static boolean shouldSkipTick(Level level, BlockPos pos) {
+        return !level.isClientSide()
+            && BanRules.hasBlockRules()
+            && BanRules.isBlockBanned(level.getBlockState(pos).getBlock(),
+                level.dimension().location());
+    }
+
     public static void trackCapabilities(AttachCapabilitiesEvent<BlockEntity> event) {
         BlockEntity blockEntity = event.getObject();
         if (blockEntity.getLevel() == null || !blockEntity.getLevel().isClientSide()) {

@@ -1,11 +1,9 @@
 package com.nins77.bandream.enforce;
 
-import com.nins77.bandream.block.BakabanManager;
 import com.nins77.bandream.config.BanRules;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
@@ -28,7 +26,6 @@ public final class BlockBanEvents {
         if (BanRules.isBlockBanned(state.getBlock(), level.dimension().location())) {
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.FAIL);
-            BakabanManager.redirect(level, event.getPos());
         }
     }
 
@@ -44,7 +41,6 @@ public final class BlockBanEvents {
         if (BanRules.isBlockBanned(state.getBlock(), level.dimension().location())) {
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.FAIL);
-            BakabanManager.redirect(level, event.getPos());
         }
     }
 
@@ -58,21 +54,6 @@ public final class BlockBanEvents {
         }
         if (BanRules.isBlockBanned(event.getState().getBlock(), level.dimension().location())) {
             event.setCanceled(true);
-            BakabanManager.redirect(level, event.getPos());
-        }
-    }
-
-    @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onPlace(BlockEvent.EntityPlaceEvent event) {
-        if (!BanRules.hasBlockRules() || event.getLevel().isClientSide()
-            || !(event.getLevel() instanceof ServerLevel level)) {
-            return;
-        }
-        if (event.getEntity() instanceof Player player && BanRules.isPlayerWhitelisted(player)) {
-            return;
-        }
-        if (BanRules.isBlockBanned(event.getPlacedBlock().getBlock(), level.dimension().location())) {
-            BakabanManager.redirect(level, event.getPos());
         }
     }
 }

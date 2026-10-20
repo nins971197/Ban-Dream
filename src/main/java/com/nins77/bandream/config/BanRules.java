@@ -457,6 +457,57 @@ public final class BanRules {
         return Optional.empty();
     }
 
+    public static boolean isItemBanned(ItemStack stack, ResourceLocation dimension) {
+        if (stack.isEmpty() || (!hasInventoryItemRules && !hasUseItemRules)) {
+            return false;
+        }
+        String id = itemId(stack.getItem());
+        if (id.isEmpty()) {
+            return false;
+        }
+        String dimensionId = dimensionId(dimension);
+        for (BanEntry entry : banIndex.candidates(BanType.ITEM, id)) {
+            if (entry.matchesScope(dimensionId)) {
+                return true;
+            }
+        }
+        if (hasNbtRules) {
+            for (BanEntry entry : banIndex.candidates(BanType.NBT, id)) {
+                if (entry.matchesScope(dimensionId) && matchesNbtEntry(entry, stack)) {
+                    return true;
+                }
+            }
+            for (BanEntry entry : banIndex.candidates(BanType.NBT, "*")) {
+                if (entry.matchesScope(dimensionId) && matchesNbtEntry(entry, stack)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static boolean matchesNbtPattern(ItemStack stack, String path, String value) {
+        if (stack.isEmpty() || path == null || path.isBlank()) {
+            return false;
+        }
+        BanEntry entry = new BanEntry(BanType.NBT, "*", BanScope.GLOBAL, null);
+        entry.path = path;
+        entry.value = value;
+        return matchesNbtEntry(entry, stack);
+    }
+
+    public static List<BanEntry> visualEntries() {
+        return banIndex.entries().stream()
+            .filter(entry -> entry.type == BanType.ITEM
+                || entry.type == BanType.BLOCK
+                || entry.type == BanType.NBT)
+            .toList();
+    }
+
+    public static boolean hasAnyItemRules() {
+        return hasInventoryItemRules || hasUseItemRules;
+    }
+
     private static boolean matchesNbtEntry(BanEntry entry, ItemStack stack) {
         CompoundTag root = stack.getTag();
         if (root == null || root.isEmpty()) {

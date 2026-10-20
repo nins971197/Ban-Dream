@@ -3,7 +3,6 @@ package com.nins77.bandream.enforce;
 import com.nins77.bandream.action.PendingActionManager;
 import com.nins77.bandream.block.BakabanManager;
 import com.nins77.bandream.config.BanRules;
-import com.nins77.bandream.config.BanTrigger;
 import com.nins77.bandream.network.BanNetwork;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -200,13 +199,6 @@ public final class BanEvents {
     public static void onEquipmentChange(LivingEquipmentChangeEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && !BanRules.isPlayerWhitelisted(player)) {
             BanEnforcement.enforcePlayer(player, true);
-        }
-    }
-
-    @SubscribeEvent
-    public static void onItemPickup(PlayerEvent.ItemPickupEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player && BanRules.hasItemRules(BanTrigger.INVENTORY)) {
-            BanEnforcement.enforcePlayer(player, false);
         }
     }
 
