@@ -8,6 +8,7 @@
 - Added the `999ban` display item and dynamic icon redirection for banned items.
 - Item bans now disable use, interaction and item callbacks without deleting or mutating items.
 - Banned blocks disable player use, destruction, block/entity ticks, neighbor updates, random ticks and fluid ticks.
+- Block-entity tick suppression uses the chunk ticker wrapper to coexist with other mods that redirect `Level.tickBlockEntities`.
 - Banned blocks reject hopper and Forge-capability item input/output.
 - Banned containers and pipes no longer exchange items after rules change.
 - `/bbban list block` now opens the same paginated, read-only list interface as items.
