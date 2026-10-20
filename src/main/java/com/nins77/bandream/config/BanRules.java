@@ -685,7 +685,7 @@ public final class BanRules {
 
     private static final class BanConfigFile {
         int version = 1;
-        String _comment = "Ban Dream rules. playerWhitelist players bypass item removal, enchantment/effect cleanup, use restrictions and dimension bans. World generation/entity bans still apply.";
+        String _comment = "Ban Dream rules. playerWhitelist players bypass item use restrictions, enchantment/effect cleanup and dimension bans. ItemStack data is not modified. World generation/entity bans still apply.";
         List<BanEntry> bans = new ArrayList<>();
         List<PlayerWhitelistEntry> playerWhitelist = new ArrayList<>();
     }
