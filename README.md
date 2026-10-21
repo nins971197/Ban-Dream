@@ -48,7 +48,7 @@ $env:JAVA_HOME = '你的 JDK 17 目录'
 .\gradlew.bat build
 ```
 
-产物位于 `build/libs/ban_dream-1.3.0.jar`。
+产物位于 `build/libs/ban_dream-1.4.0.jar`。
 
 Curios 使用 `5.10.0+1.20.1` 的 API 作为 `compileOnly` 依赖，运行时不要求安装。
 

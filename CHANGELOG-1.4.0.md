@@ -1,4 +1,4 @@
-# Ban Dream 1.3.0
+# Ban Dream 1.4.0
 
 - Added block bans with global scope; entity bans retain dimension scope.
 - Added `/bbban ban block`.
