@@ -25,24 +25,10 @@ import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.PlayerContainerEvent;
-import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public final class BanEvents {
-    private static final Logger LOGGER = LoggerFactory.getLogger(BanEvents.class);
-
     private BanEvents() {
-    }
-
-    @SubscribeEvent
-    public static void onServerAboutToStart(ServerAboutToStartEvent event) {
-        try {
-            BanRules.load();
-        } catch (Exception exception) {
-            LOGGER.error("Failed to load Ban Dream rules from {}", BanRules.configPath(), exception);
-        }
     }
 
     @SubscribeEvent

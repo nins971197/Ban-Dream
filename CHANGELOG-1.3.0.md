@@ -36,8 +36,8 @@
 - Added the `bakaban` display item with a six-face texture.
 - Block bans now store complete snapshots by UUID and redirect to `bakaban`.
 - `bakaban` follows its current position when broken and placed again.
-- Config load failures are now reported instead of silently ignored.
+- Config load failures abort startup with a path-qualified exception instead of being silently ignored.
 - Renamed all user-facing mod titles to Ban Dream.
-- Removed development logging and explanatory comments from packaged sources; config-load failures still emit an error with the file path.
+- Removed development logging and explanatory comments from packaged sources; config-load failures are surfaced through startup exceptions.
 - Moved architecture and build notes into the workspace `docs` directory.
 - Added Forge 1.12.2, Cleanroom 1.12.2, NeoForge 1.20.1, and NeoForge 1.21.1 workspaces.

@@ -1,5 +1,7 @@
 package com.nins77.bandream;
 
+import java.io.IOException;
+
 import com.nins77.bandream.config.BanRules;
 import com.nins77.bandream.block.BakabanEvents;
 import com.nins77.bandream.block.BanBlocks;
@@ -19,14 +21,11 @@ import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Mod(BanDream.MOD_ID)
 public final class BanDream {
     public static final String MOD_ID = "bandream";
     public static final String MOD_NAME = "Ban Dream";
-    private static final Logger LOGGER = LoggerFactory.getLogger(BanDream.class);
 
     public BanDream() {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -51,8 +50,9 @@ public final class BanDream {
         event.enqueueWork(() -> {
             try {
                 BanRules.load();
-            } catch (Exception exception) {
-                LOGGER.error("Failed to load Ban Dream rules from {}", BanRules.configPath(), exception);
+            } catch (IOException exception) {
+                throw new IllegalStateException(
+                    "Failed to load Ban Dream rules from " + BanRules.configPath(), exception);
             }
         });
     }
