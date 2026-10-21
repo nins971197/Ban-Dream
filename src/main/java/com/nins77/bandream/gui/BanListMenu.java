@@ -173,7 +173,7 @@ public final class BanListMenu extends AbstractContainerMenu {
         for (BanEntry entry : group.entries()) {
             lore.add(Component.literal("范围: " + BanText.scopeLabel(entry)).withStyle(ChatFormatting.GRAY));
         }
-        lore.add(Component.literal("状态: 全局原位禁止").withStyle(ChatFormatting.GRAY));
+        lore.add(Component.literal("状态: 已重定向为 bakaban").withStyle(ChatFormatting.GRAY));
         lore.add(Component.literal("左键：管理封禁 / 解封").withStyle(ChatFormatting.AQUA));
         lore.add(Component.literal("编号 #" + (index + 1)).withStyle(ChatFormatting.DARK_GRAY));
         setLore(stack, lore);

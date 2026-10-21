@@ -7,6 +7,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.nins77.bandream.block.BakabanService;
+import com.nins77.bandream.block.BanBlocks;
 import com.nins77.bandream.config.BanRules;
 import com.nins77.bandream.config.BanType;
 import com.nins77.bandream.item.BanItems;
@@ -86,12 +88,15 @@ public final class BanStickEvents {
             return;
         }
 
-        String blockId = BanRules.blockId(state.getBlock());
+        BlockState original = state.is(BanBlocks.BAKABAN.get())
+            ? BakabanService.originalState(level, event.getPos())
+            : state;
+        String blockId = original == null ? "" : BanRules.blockId(original.getBlock());
         if (blockId.isEmpty()) {
             BanEnforcement.notify(player, "无法读取该方块的类型");
             return;
         }
-        BanActionHandler.openBlockOptions(player, blockId, state.getBlock().getName().getString());
+        BanActionHandler.openBlockOptions(player, blockId, original.getBlock().getName().getString());
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -121,13 +126,18 @@ public final class BanStickEvents {
             return;
         }
 
-        String blockId = BanRules.blockId(state.getBlock());
+        BlockState original = state.is(BanBlocks.BAKABAN.get())
+            ? BakabanService.originalState(level, event.getPos())
+            : state;
+        String blockId = original == null ? "" : BanRules.blockId(original.getBlock());
         if (blockId.isEmpty()) {
             BanEnforcement.notify(player, "无法读取该方块的类型");
             return;
         }
-        BanActionHandler.openUnbanConfirm(player, BanType.BLOCK, blockId,
-            state.getBlock().getName().getString());
+        String displayName = original == null
+            ? state.getBlock().getName().getString()
+            : original.getBlock().getName().getString();
+        BanActionHandler.openUnbanConfirm(player, BanType.BLOCK, blockId, displayName);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)

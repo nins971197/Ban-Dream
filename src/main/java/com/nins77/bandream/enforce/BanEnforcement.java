@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.nins77.bandream.compat.CuriosCompat;
+import com.nins77.bandream.block.BakabanScanner;
 import com.nins77.bandream.config.BanRules;
 import com.nins77.bandream.network.BanNetwork;
 import net.minecraft.ChatFormatting;
@@ -200,6 +201,7 @@ public final class BanEnforcement {
     ) {
         if (refreshBlockCapabilities) {
             BlockBanSupport.refreshItemCapabilities();
+            BakabanScanner.refresh(server);
         }
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             BanNetwork.sync(player);

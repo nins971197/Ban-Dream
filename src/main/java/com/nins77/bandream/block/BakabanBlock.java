@@ -26,19 +26,22 @@ public final class BakabanBlock extends BaseEntityBlock {
         InteractionHand hand,
         BlockHitResult hit
     ) {
-        if (level.isClientSide()) {
-            return InteractionResult.SUCCESS;
-        }
-        return BakabanManager.restore(level, pos, player)
-            ? InteractionResult.SUCCESS
-            : InteractionResult.PASS;
+        return InteractionResult.FAIL;
     }
 
     @Override
-    public void attack(BlockState state, Level level, BlockPos pos, Player player) {
-        if (!level.isClientSide()) {
-            BakabanManager.restore(level, pos, player);
+    public void onRemove(
+        BlockState state,
+        Level level,
+        BlockPos pos,
+        BlockState newState,
+        boolean movedByPiston
+    ) {
+        if (!level.isClientSide() && !state.is(newState.getBlock())
+            && level.getBlockEntity(pos) instanceof BakabanBlockEntity marker) {
+            BakabanService.dropMarker(level, pos, marker.snapshotId());
         }
+        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
     @Override

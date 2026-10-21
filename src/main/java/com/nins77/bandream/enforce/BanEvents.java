@@ -1,7 +1,6 @@
 package com.nins77.bandream.enforce;
 
 import com.nins77.bandream.action.PendingActionManager;
-import com.nins77.bandream.block.BakabanManager;
 import com.nins77.bandream.config.BanRules;
 import com.nins77.bandream.network.BanNetwork;
 import net.minecraft.ChatFormatting;
@@ -24,7 +23,6 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
-import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,11 +40,6 @@ public final class BanEvents {
         } catch (Exception exception) {
             LOGGER.error("Failed to load Ban Dream rules from {}", BanRules.configPath(), exception);
         }
-    }
-
-    @SubscribeEvent
-    public static void onServerStarted(ServerStartedEvent event) {
-        BakabanManager.refresh(event.getServer());
     }
 
     @SubscribeEvent

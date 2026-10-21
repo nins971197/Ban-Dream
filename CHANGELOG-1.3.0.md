@@ -1,10 +1,10 @@
 # Ban Dream 1.3.0
 
-- Added block bans with global or per-dimension scope.
+- Added block bans with global scope; entity bans retain dimension scope.
 - Added `/bbban ban block`.
 - Ban Stick left-click now selects blocks for confirmation.
-- Block bans now use Mixin redirection while keeping the original block state and world model.
-- Banned items and blocks keep their original icons and models.
+- Block bans now replace the original block with a `bakaban` marker and preserve the original state and BlockEntity by UUID.
+- Banned items keep their original icons; banned block markers use the `bakaban` model.
 - The `999ban` display item remains available as a resource but is not applied automatically.
 - Item bans now disable use, interaction and item callbacks without deleting or mutating items.
 - Banned blocks allow destruction and placement while disabling right-click use, block/entity ticks, neighbor updates, random ticks and fluid ticks.
@@ -28,14 +28,15 @@
 - Refreshed Curios stacks after item removal or enchantment cleanup.
 - Added rule-type fast paths for entities, structures, dimensions, effects and enchantments.
 - Removed periodic player inventory scanning and item deletion to preserve ItemStack data.
-- Removed active block scanning and redirection from the new ban path.
-- Preserved saved block data when block-entity restoration fails.
+- The legacy coordinate-based block snapshot path was replaced by UUID-based snapshots.
+- Failed block-entity restoration keeps the marker and snapshot intact.
 - Added Curios change-event cleanup without a hard dependency.
 - Added early exits for block and structure events when no matching rule type exists.
 - Corrected hopper tick checks to inspect the actual output side.
 - Cached item, block, entity and dimension IDs for hot-path rule lookups.
 - Added the `bakaban` display item with a six-face texture.
-- Old `bakaban` snapshots are retained only for legacy migration.
+- Block bans now store complete snapshots by UUID and redirect to `bakaban`.
+- `bakaban` follows its current position when broken and placed again.
 - Config load failures are now reported instead of silently ignored.
 - Renamed all user-facing mod titles to Ban Dream.
 - Removed development logging and explanatory comments from packaged sources; config-load failures still emit an error with the file path.

@@ -45,21 +45,23 @@ Entity spawning and structure generation remain world-level rules.
 
 ## Block ban enforcement
 
-Block rules now leave the original block and BlockEntity in place. The server-side
-`ServerPlayerGameModeMixin` rejects right-click use while allowing destruction and
-placement, `LevelChunkTickerMixin` suppresses block entity ticks, `LevelMixin` suppresses
-neighbor updates, and `ServerLevelMixin` suppresses scheduled, random, and fluid ticks.
-The client keeps the original block and item models; no visual model redirection is
-performed.
+Block rules replace the original block with `bakaban`. The complete original BlockState
+and BlockEntity NBT are stored once in a global UUID-indexed snapshot store.
+`BakabanBlockEntity` and dropped `bakaban` items store only the UUID. The marker may be
+broken and placed elsewhere; restoration uses the marker's current position.
 
-The old `bakaban` marker and `BakabanSavedData` remain only as a legacy migration path.
-On startup and chunk load, old snapshots are restored to their original blocks and
-removed from storage. New block bans do not create markers or snapshots.
+`BakabanScanner` scans loaded chunks for banned blocks and existing markers. On unban it
+restores markers at their current positions and leaves unloaded chunks queued for their
+next load. `ServerPlayerGameModeMixin` blocks right-click use, while destruction and
+placement remain allowed. `LevelChunkTickerMixin`, `LevelMixin`, and `ServerLevelMixin`
+continue to suppress internal block behavior before a marker is created.
 
 Item movement is blocked at three layers:
 
+- `bakaban` exposes no original item handler, so pipes and machines cannot access the
+  original contents;
 - `CapabilityProvider` and `BaseContainerBlockEntity` mixins return an empty item handler
-  while the block is banned, covering Forge-capability pipes and machines;
+  for any pre-redirection banned block still present in a loaded race window;
 - `HopperBlockEntity` mixins stop hopper ticks, entity pickup, source extraction, and
   destination lookup for loaded hoppers;
 - banned block entities are tracked weakly while loaded. Block rule changes invalidate
