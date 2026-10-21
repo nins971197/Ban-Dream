@@ -1,9 +1,10 @@
 package com.nins77.bandream.compat;
 
 import com.nins77.bandream.config.BanRules;
-import com.nins77.bandream.config.BanTrigger;
 import com.nins77.bandream.enforce.BanEnforcement;
+import com.nins77.bandream.item.ItemRedirectService;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import top.theillusivec4.curios.api.CuriosApi;
@@ -35,17 +36,23 @@ public final class CuriosCompat {
         if (handler == null) {
             return false;
         }
+        if (!(player.level() instanceof ServerLevel level)) {
+            return false;
+        }
+        boolean bypassBans = BanRules.isPlayerWhitelisted(player);
         int[] removed = {0};
         boolean changed = false;
         for (ICurioStacksHandler stacksHandler : handler.getCurios().values()) {
             boolean stackChanged = clean(
-                stacksHandler.getStacks(), player, dimension, scanItems, scanEnchantments, removed);
+                stacksHandler.getStacks(), player, level, dimension, scanItems, scanEnchantments,
+                bypassBans, removed);
             changed |= stackChanged;
             if (stacksHandler.hasCosmetic()) {
                 IDynamicStackHandler cosmetic = stacksHandler.getCosmeticStacks();
                 if (cosmetic != null) {
                     stackChanged |= clean(
-                        cosmetic, player, dimension, scanItems, scanEnchantments, removed);
+                        cosmetic, player, level, dimension, scanItems, scanEnchantments,
+                        bypassBans, removed);
                     changed |= stackChanged;
                 }
             }
@@ -54,7 +61,7 @@ public final class CuriosCompat {
             }
         }
         if (removed[0] > 0) {
-            BanEnforcement.notify(player, "已移除饰品栏封禁物品: " + removed[0] + " 件");
+            BanEnforcement.notify(player, "已封存饰品栏封禁物品: " + removed[0] + " 件");
         }
         return changed;
     }
@@ -62,9 +69,11 @@ public final class CuriosCompat {
     private static boolean clean(
         IDynamicStackHandler stacks,
         ServerPlayer player,
+        ServerLevel level,
         ResourceLocation dimension,
         boolean scanItems,
         boolean scanEnchantments,
+        boolean bypassBans,
         int[] removed
     ) {
         boolean changed = false;
@@ -73,11 +82,16 @@ public final class CuriosCompat {
             if (stack.isEmpty()) {
                 continue;
             }
-            if (scanItems) {
-                boolean banned = BanRules.findItem(stack, dimension, BanTrigger.INVENTORY).isPresent()
-                    || BanRules.findItem(stack, dimension, BanTrigger.USE).isPresent();
-                if (banned) {
-                    stacks.setStackInSlot(slot, ItemStack.EMPTY);
+            ItemStack restored = ItemRedirectService.restore(stack, level, dimension, bypassBans);
+            if (restored != null) {
+                stacks.setStackInSlot(slot, restored);
+                changed = true;
+                stack = restored;
+            }
+            if (scanItems && !bypassBans) {
+                ItemStack marker = ItemRedirectService.redirect(stack, level);
+                if (marker != null) {
+                    stacks.setStackInSlot(slot, marker);
                     removed[0]++;
                     changed = true;
                     continue;

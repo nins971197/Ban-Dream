@@ -7,15 +7,17 @@ This document is workspace-only and is not packaged into the mod jar.
 1. Commands create `BanEntry` rules or pending actions.
 2. `BanRules` validates, sorts, indexes, and writes rules to `config/bandream/bans.json`.
 3. `RuleIndex` provides type-and-ID lookups without scanning the full rule list.
-4. `BanEvents` handles effect, enchantment, dimension, and fallback interaction enforcement.
-5. `BlockBanEvents` handles block interaction and breaking cancellation.
-6. `BlockBanSupport` answers item I/O queries for mixins and events.
-7. `BanStickEvents` selects Ban Stick targets and opens server-validated option panels.
-8. `BanActionHandler` maps client choices to ban or unban operations.
-9. `BanEnforcement` applies effect, dimension, entity, and enchantment cleanup.
-10. `ItemStackMixin` blocks item use and special item callbacks on the server.
-11. `LevelMixin` and `ServerLevelMixin` suppress banned block ticks and updates.
-12. `ServerPlayerGameModeMixin` blocks player interaction and destruction.
+4. `BanEvents` handles effect, dimension, entity and item-entity enforcement.
+5. `ItemRedirectService` creates and restores UUID-backed `999ban` item markers.
+6. `ItemSnapshotStore` keeps original ItemStacks in world SavedData.
+7. `BlockBanEvents` handles block interaction and placement.
+8. `BlockBanSupport` answers item I/O queries for mixins and events.
+9. `BanStickEvents` selects Ban Stick targets and opens server-validated option panels.
+10. `BanActionHandler` maps client choices to ban or unban operations.
+11. `BanEnforcement` applies player inventory, Curios, effect, dimension and entity cleanup.
+12. `ItemStackMixin` blocks item callbacks while a redirect is pending.
+13. `LevelMixin` and `ServerLevelMixin` suppress banned block ticks and updates.
+14. `ServerPlayerGameModeMixin` blocks player interaction and destruction.
 
 ## Rule storage
 
@@ -36,12 +38,32 @@ Player whitelist entries match by UUID first and then by case-insensitive player
 
 Player whitelist affects:
 
-- item use and interaction blocking;
+- item redirects and item callback blocking;
+- Curios item redirects;
 - enchantment cleanup;
 - mob effect cleanup;
 - dimension travel and forced dimension escape.
 
 Entity spawning and structure generation remain world-level rules.
+
+## Item ban enforcement
+
+Item rules replace matching stacks with `999ban`. The complete original ItemStack is
+stored once by UUID in `bandream_item_snapshots` SavedData. A `999ban` stack stores only
+the UUID in its `SnapshotId` tag, so moving, dropping or storing the marker does not
+duplicate the original item data.
+
+`PlayerInventoryMixin` handles inventory insertion and slot writes. Player login,
+dimension changes, inventory events and rule changes restore valid markers and redirect
+remaining stacks. `EntityJoinLevelEvent` handles dropped or machine-spawned item
+entities. Item markers become invulnerable and never expire. When item rules change,
+loaded item entities are checked once rather than every tick.
+
+Container stacks are redirected when they reach a player inventory or Curios slot.
+Markers already stored inside a closed third-party container remain markers until the
+mod's rule refresh can reach a supported inventory surface. Marker UUIDs are globally
+unique; copying a marker with commands copies its UUID and does not duplicate the
+underlying snapshot.
 
 ## Block ban enforcement
 
@@ -72,18 +94,19 @@ not consult the player whitelist.
 
 ## Performance guards
 
-Rule types with no entries are skipped before registry and index work. Item use is
-checked at the `ItemStack` interaction and callback boundaries, not by periodic
-inventory scans. Effect additions are handled by `MobEffectEvent.Added`, and Curios
-changes by `CurioChangeEvent`. Block behavior is checked at central tick and update
-entry points. Hopper ticks check only the source, self and actual output side.
+Rule types with no entries are skipped before registry and index work. Inventory
+redirects run only on insertion, slot writes, login and rule changes, not on a timer.
+Effect additions are handled by `MobEffectEvent.Added`, and Curios changes by
+`CurioChangeEvent`. Block behavior is checked at central tick and update entry points.
+Hopper ticks check only the source, self and actual output side.
 
 Measured query costs and rough server-load estimates are recorded in
 `docs/performance.md`.
 
 ## Ban Stick actions
 
-`PendingActionManager` stores one short-lived action per player. The server sends an
+`PendingActionManager` stores one short-lived action per player. Ban Stick clicks and
+action choices require permission level 3. The server sends an
 `OpenChoicePacket`; the client displays a left-side option panel or a bottom-right
 confirmation panel. The client returns only an action ID and option index. The server
 validates permission, action expiry, and the stored target before writing rules.
@@ -108,5 +131,5 @@ dependency.
 ## Optional Curios integration
 
 `CuriosCompat` is compiled against the Curios API but is only registered when Curios is
-loaded. Curio change events can strip banned enchantments, but item bans never remove
-curio stacks. Curios is not a required dependency.
+loaded. Curio change events redirect banned items to `999ban`, restore markers after
+unban, and strip banned enchantments. Curios is not a required dependency.

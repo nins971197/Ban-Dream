@@ -70,7 +70,7 @@ public final class BanActionHandler {
 
     public static void applyChoice(ServerPlayer player, int actionId, int choice) {
         if (!player.hasPermissions(Commands.LEVEL_ADMINS)) {
-            BanEnforcement.notify(player, "使用封禁棒需要管理员权限");
+            BanEnforcement.notify(player, "使用封禁棒需要 OP 权限");
             return;
         }
         PendingActionManager.Action action = PendingActionManager.take(player, actionId);
@@ -105,7 +105,7 @@ public final class BanActionHandler {
 
     public static void unbanItems(ServerPlayer player, List<String> ids) {
         if (!player.hasPermissions(Commands.LEVEL_ADMINS)) {
-            BanEnforcement.notify(player, "使用封禁棒需要管理员权限");
+            BanEnforcement.notify(player, "使用封禁棒需要 OP 权限");
             return;
         }
         if (ids.isEmpty()) {

@@ -23,5 +23,7 @@ public final class BanStickItem extends Item {
             .withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("item.bandream.ban_stick.tooltip3")
             .withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(Component.translatable("item.bandream.ban_stick.tooltip4")
+            .withStyle(ChatFormatting.DARK_RED));
     }
 }

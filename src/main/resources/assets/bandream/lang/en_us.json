@@ -14,5 +14,6 @@
   "item.bandream.999ban": "999ban",
   "item.bandream.ban_stick.tooltip1": "Left-click a block or mob to open ban options",
   "item.bandream.ban_stick.tooltip2": "Sneak left-click a barrel to ban all contained items",
-  "item.bandream.ban_stick.tooltip3": "Right-click a block or mob to confirm a global unban; sneak right-click a barrel to unban its items"
+  "item.bandream.ban_stick.tooltip3": "Right-click a block or mob to confirm a global unban; sneak right-click a barrel to unban its items",
+  "item.bandream.ban_stick.tooltip4": "Requires permission level 3"
 }

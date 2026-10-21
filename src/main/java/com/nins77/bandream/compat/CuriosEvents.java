@@ -13,15 +13,15 @@ public final class CuriosEvents {
     @SubscribeEvent
     public static void onCurioChanged(CurioChangeEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)
-            || player.level().isClientSide
-            || BanRules.isPlayerWhitelisted(player)) {
+            || player.level().isClientSide) {
             return;
         }
+        boolean scanItems = BanRules.hasAnyItemRules();
         boolean scanEnchantments = BanRules.hasEnchantmentRules();
-        if (!scanEnchantments) {
+        if (!scanItems && !scanEnchantments) {
             return;
         }
         ResourceLocation dimension = player.level().dimension().location();
-        CuriosCompat.enforce(player, dimension, false, true);
+        CuriosCompat.enforce(player, dimension, scanItems, scanEnchantments);
     }
 }

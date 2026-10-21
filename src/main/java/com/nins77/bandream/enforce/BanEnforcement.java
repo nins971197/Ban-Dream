@@ -8,6 +8,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.nins77.bandream.compat.CuriosCompat;
 import com.nins77.bandream.block.BakabanScanner;
+import com.nins77.bandream.item.ItemSnapshotStore;
+import com.nins77.bandream.item.ItemRedirectService;
 import com.nins77.bandream.config.BanRules;
 import com.nins77.bandream.network.BanNetwork;
 import net.minecraft.ChatFormatting;
@@ -21,6 +23,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -35,12 +38,24 @@ public final class BanEnforcement {
     }
 
     public static void enforcePlayer(ServerPlayer player, boolean fullCheck) {
-        if (player.level().isClientSide || BanRules.isPlayerWhitelisted(player)) {
+        if (player.level().isClientSide) {
+            return;
+        }
+        boolean whitelisted = BanRules.isPlayerWhitelisted(player);
+        boolean changed = ItemRedirectService.restorePlayer(player, whitelisted);
+        changed |= ItemRedirectService.enforceMenu(
+            player, player.containerMenu, !whitelisted && BanRules.hasAnyItemRules());
+        if (whitelisted) {
+            if (ModList.get().isLoaded("curios")) {
+                changed |= CuriosCompat.enforce(player, player.level().dimension().location(), false, false);
+            }
             return;
         }
         ResourceLocation dimension = player.level().dimension().location();
         boolean scanEnchantments = fullCheck && BanRules.hasEnchantmentRules();
-        boolean changed = false;
+        if (BanRules.hasAnyItemRules()) {
+            changed |= ItemRedirectService.redirectPlayer(player);
+        }
 
         if (scanEnchantments) {
             changed |= scanCompartment(player, player.getInventory().items, dimension);
@@ -48,8 +63,10 @@ public final class BanEnforcement {
             changed |= scanCompartment(player, player.getInventory().offhand, dimension);
         }
 
-        if (scanEnchantments && ModList.get().isLoaded("curios")) {
-            changed |= CuriosCompat.enforce(player, dimension, false, true);
+        if (ModList.get().isLoaded("curios")
+            && (BanRules.hasAnyItemRules() || scanEnchantments)) {
+            changed |= CuriosCompat.enforce(
+                player, dimension, BanRules.hasAnyItemRules(), scanEnchantments);
         }
 
         if (fullCheck && BanRules.hasEffectRules() && !player.getActiveEffects().isEmpty()) {
@@ -208,20 +225,26 @@ public final class BanEnforcement {
         }
         boolean entityRules = purgeEntities && BanRules.hasEntityRules();
         boolean effectRules = BanRules.hasEffectRules();
-        if (entityRules || effectRules) {
-            for (ServerLevel level : server.getAllLevels()) {
-                List<Entity> entities = new ArrayList<>();
-                level.getAllEntities().forEach(entities::add);
-                for (Entity entity : entities) {
-                    if (entity instanceof Player) {
-                        continue;
-                    }
-                    if (entityRules && BanRules.isEntityBanned(
-                        entity.getType(), level.dimension().location())) {
-                        entity.discard();
-                    } else if (effectRules && entity instanceof LivingEntity living) {
-                        enforceLivingEffects(living);
-                    }
+        for (ServerLevel level : server.getAllLevels()) {
+            ItemSnapshotStore itemSnapshots = ItemSnapshotStore.get(level);
+            if (!entityRules && !effectRules && !BanRules.hasAnyItemRules()
+                && !itemSnapshots.hasSnapshots()) {
+                continue;
+            }
+            List<Entity> entities = new ArrayList<>();
+            level.getAllEntities().forEach(entities::add);
+            for (Entity entity : entities) {
+                if (entity instanceof Player) {
+                    continue;
+                }
+                if (entityRules && BanRules.isEntityBanned(
+                    entity.getType(), level.dimension().location())) {
+                    entity.discard();
+                } else if (entity instanceof ItemEntity itemEntity) {
+                    ItemRedirectService.handleItemEntity(
+                        itemEntity, level, BanRules.hasAnyItemRules());
+                } else if (effectRules && entity instanceof LivingEntity living) {
+                    enforceLivingEffects(living);
                 }
             }
         }

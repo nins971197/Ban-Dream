@@ -143,6 +143,7 @@ public final class BanListMenu extends AbstractContainerMenu {
                 lore.add(Component.literal("JEI: 隐藏").withStyle(ChatFormatting.DARK_GRAY));
             }
         }
+        lore.add(Component.literal("状态: 已封存为 999ban").withStyle(ChatFormatting.GRAY));
         lore.add(Component.literal("左键：管理封禁方式 / 解封").withStyle(ChatFormatting.AQUA));
         lore.add(Component.literal("编号 #" + (index + 1)).withStyle(ChatFormatting.DARK_GRAY));
         setLore(stack, lore);

@@ -42,7 +42,7 @@ public final class BanText {
     }
 
     public static String trigger(BanEntry entry) {
-        return "禁止使用和交互";
+        return "已封存为 999ban";
     }
 
     public static String line(BanEntry entry) {

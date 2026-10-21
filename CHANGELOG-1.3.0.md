@@ -4,9 +4,8 @@
 - Added `/bbban ban block`.
 - Ban Stick left-click now selects blocks for confirmation.
 - Block bans now replace the original block with a `bakaban` marker and preserve the original state and BlockEntity by UUID.
-- Banned items keep their original icons; banned block markers use the `bakaban` model.
-- The `999ban` display item remains available as a resource but is not applied automatically.
-- Item bans now disable use, interaction and item callbacks without deleting or mutating items.
+- Banned items are replaced by UUID-backed `999ban` markers; banned block markers use the `bakaban` model.
+- Item snapshots preserve the original ItemStack, count, item ID and NBT through bans, restarts and unbans.
 - Banned blocks allow destruction and placement while disabling right-click use, block/entity ticks, neighbor updates, random ticks and fluid ticks.
 - Block-entity tick suppression uses the chunk ticker wrapper to coexist with other mods that redirect `Level.tickBlockEntities`.
 - Dimension scope is now restricted to entities; old non-entity dimension rules normalize to global.
@@ -21,16 +20,16 @@
 - Right-clicking a block or mob opens a bottom-right global unban confirmation.
 - Sneak right-clicking a barrel globally unbans all contained item IDs immediately.
 - Item and block list entries now open a management panel for bans or unbans.
-- Added optional Curios support without removing banned curio stacks.
+- Added optional Curios support for redirecting and restoring banned equipped items.
 - Restricted list entry management to left-click and closed the old list container first.
 - Preserved JEI visibility when changing an item ban mode.
 - Guarded client choice packets during disconnects and deduplicated entity right-click events.
-- Refreshed Curios stacks after item removal or enchantment cleanup.
+- Refreshed Curios stacks after item redirection or enchantment cleanup.
 - Added rule-type fast paths for entities, structures, dimensions, effects and enchantments.
-- Removed periodic player inventory scanning and item deletion to preserve ItemStack data.
+- Removed periodic player inventory scanning; item redirects use inventory insertion and set hooks.
 - The legacy coordinate-based block snapshot path was replaced by UUID-based snapshots.
 - Failed block-entity restoration keeps the marker and snapshot intact.
-- Added Curios change-event cleanup without a hard dependency.
+- Added Curios change-event handling without a hard dependency.
 - Added early exits for block and structure events when no matching rule type exists.
 - Corrected hopper tick checks to inspect the actual output side.
 - Cached item, block, entity and dimension IDs for hot-path rule lookups.

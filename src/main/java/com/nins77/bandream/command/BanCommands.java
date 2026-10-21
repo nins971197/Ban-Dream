@@ -31,6 +31,7 @@ import com.nins77.bandream.config.BanType;
 import com.nins77.bandream.enforce.BanEnforcement;
 import com.nins77.bandream.gui.BanListMenu;
 import com.nins77.bandream.item.BanItems;
+import com.nins77.bandream.item.ItemRedirectService;
 import com.nins77.bandream.text.BanText;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -48,6 +49,8 @@ public final class BanCommands {
         Component.literal("该指令只能由玩家执行"));
     private static final SimpleCommandExceptionType ERROR_EMPTY_HAND = new SimpleCommandExceptionType(
         Component.literal("主手没有物品，无法执行手持物品封禁"));
+    private static final SimpleCommandExceptionType ERROR_MARKER_HAND = new SimpleCommandExceptionType(
+        Component.literal("主手是封存标记，无法按标记本身创建物品封禁"));
     private BanCommands() {
     }
 
@@ -133,6 +136,9 @@ public final class BanCommands {
         ItemStack held = player.getMainHandItem();
         if (held.isEmpty()) {
             throw ERROR_EMPTY_HAND.create();
+        }
+        if (ItemRedirectService.isMarker(held)) {
+            throw ERROR_MARKER_HAND.create();
         }
         ResourceLocation id = BuiltInRegistries.ITEM.getKey(held.getItem());
         return applyItemBan(context, id, scope, jeiVisible, trigger);
@@ -521,7 +527,7 @@ public final class BanCommands {
             "不写物品 ID 时封禁主手物品；不写范围时默认全局")
             .withStyle(ChatFormatting.DARK_GRAY));
         source.sendSystemMessage(Component.literal(
-            "物品封禁只禁止使用、交互和物品自身事件，不删除物品")
+            "被封禁的物品会替换为 999ban，原物品数据保存在世界存档中")
             .withStyle(ChatFormatting.DARK_GRAY));
         source.sendSystemMessage(Component.literal(
             "除生物外，所有封禁类型均为全局规则")
@@ -535,7 +541,7 @@ public final class BanCommands {
             "/bbban whitelist add|remove|list <玩家>  — 豁免物品/效果/维度限制")
             .withStyle(ChatFormatting.GRAY));
         source.sendSystemMessage(Component.literal(
-            "/bbban stick  — 左键方块/生物打开封禁选项，右键确认全局解封")
+            "/bbban stick  — 生成封禁棒；使用封禁棒需要 OP 权限")
             .withStyle(ChatFormatting.GRAY));
         source.sendSystemMessage(Component.literal(
             "潜行左键木桶：封禁桶内物品；潜行右键木桶：一键解封桶内物品")

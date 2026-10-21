@@ -2,15 +2,18 @@ package com.nins77.bandream.enforce;
 
 import com.nins77.bandream.action.PendingActionManager;
 import com.nins77.bandream.config.BanRules;
+import com.nins77.bandream.item.ItemRedirectService;
 import com.nins77.bandream.network.BanNetwork;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
@@ -65,15 +68,24 @@ public final class BanEvents {
         }
         boolean entityRules = BanRules.hasEntityRules();
         boolean effectRules = BanRules.hasEffectRules();
-        if (!entityRules && !effectRules) {
+        boolean itemRules = BanRules.hasAnyItemRules();
+        Entity entity = event.getEntity();
+        boolean itemMarker = entity instanceof ItemEntity itemEntity
+            && ItemRedirectService.isMarker(itemEntity.getItem());
+        if (!entityRules && !effectRules && !itemRules && !itemMarker) {
             return;
         }
-        Entity entity = event.getEntity();
         if (entityRules && BanRules.isEntityBanned(
             entity.getType(), event.getLevel().dimension().location())) {
             event.setCanceled(true);
-        } else if (effectRules && entity instanceof LivingEntity living) {
+            return;
+        }
+        if (effectRules && entity instanceof LivingEntity living) {
             BanEnforcement.enforceLivingEffects(living);
+        }
+        if ((itemRules || itemMarker) && entity instanceof ItemEntity itemEntity
+            && event.getLevel() instanceof ServerLevel level) {
+            ItemRedirectService.handleItemEntity(itemEntity, level, itemRules);
         }
     }
 
@@ -168,8 +180,15 @@ public final class BanEvents {
     }
 
     @SubscribeEvent
+    public static void onContainerOpen(PlayerContainerEvent.Open event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            BanEnforcement.enforcePlayer(player, true);
+        }
+    }
+
+    @SubscribeEvent
     public static void onContainerClose(PlayerContainerEvent.Close event) {
-        if (event.getEntity() instanceof ServerPlayer player && !BanRules.isPlayerWhitelisted(player)) {
+        if (event.getEntity() instanceof ServerPlayer player) {
             BanEnforcement.enforcePlayer(player, true);
         }
     }

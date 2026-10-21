@@ -12,6 +12,7 @@
     "ItemStackMixin",
     "LevelMixin",
     "LevelChunkTickerMixin",
+    "PlayerInventoryMixin",
     "ServerLevelMixin",
     "ServerPlayerGameModeMixin",
     "StructureStartMixin"

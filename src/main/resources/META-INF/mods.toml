@@ -17,7 +17,7 @@ an optional paginated item and block browser, written-book exports and editable 
 A Ban Stick provides option panels for blocks, mobs and barrel contents.
 Item and block bans use server-side redirection hooks while preserving ItemStack and world block data.
 Player whitelist entries exempt selected players from player-facing restrictions.
-Optional Curios integration checks curio enchantments without deleting curio stacks.
+Optional Curios integration redirects banned equipped items to 999ban and restores them on unban.
 
 Commands:
 /bbban ban ...    create or update a ban

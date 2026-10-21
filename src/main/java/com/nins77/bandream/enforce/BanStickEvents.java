@@ -43,7 +43,7 @@ public final class BanStickEvents {
         }
         event.setCanceled(true);
         if (!player.hasPermissions(Commands.LEVEL_ADMINS)) {
-            BanEnforcement.notify(player, "使用封禁棒需要管理员权限");
+            BanEnforcement.notify(player, "使用封禁棒需要 OP 权限");
             return;
         }
         if (event.getTarget() instanceof Player) {
@@ -74,7 +74,7 @@ public final class BanStickEvents {
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.FAIL);
         if (!player.hasPermissions(Commands.LEVEL_ADMINS)) {
-            BanEnforcement.notify(player, "使用封禁棒需要管理员权限");
+            BanEnforcement.notify(player, "使用封禁棒需要 OP 权限");
             return;
         }
         BlockState state = level.getBlockState(event.getPos());
@@ -112,7 +112,7 @@ public final class BanStickEvents {
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.FAIL);
         if (!player.hasPermissions(Commands.LEVEL_ADMINS)) {
-            BanEnforcement.notify(player, "使用封禁棒需要管理员权限");
+            BanEnforcement.notify(player, "使用封禁棒需要 OP 权限");
             return;
         }
         BlockState state = level.getBlockState(event.getPos());
@@ -173,7 +173,7 @@ public final class BanStickEvents {
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.FAIL);
         if (!player.hasPermissions(Commands.LEVEL_ADMINS)) {
-            BanEnforcement.notify(player, "使用封禁棒需要管理员权限");
+            BanEnforcement.notify(player, "使用封禁棒需要 OP 权限");
             return;
         }
         if (target instanceof Player) {
