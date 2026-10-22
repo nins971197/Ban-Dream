@@ -17,6 +17,9 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public final class ItemRedirectService {
+    private static final int DEFAULT_ITEM_LIFESPAN = 6000;
+    private static final ThreadLocal<Boolean> INTERNAL_REDIRECT = ThreadLocal.withInitial(() -> false);
+
     private ItemRedirectService() {
     }
 
@@ -61,7 +64,20 @@ public final class ItemRedirectService {
     public static boolean isMarker(ItemStack stack) {
         return !stack.isEmpty()
             && stack.is(BanItems.BAN_999.get())
+            && !BannedItemMarkerItem.hasMissingSnapshot(stack)
             && BannedItemMarkerItem.snapshotId(stack) != null;
+    }
+
+    public static boolean beginInternalRedirect() {
+        if (INTERNAL_REDIRECT.get()) {
+            return false;
+        }
+        INTERNAL_REDIRECT.set(true);
+        return true;
+    }
+
+    public static void endInternalRedirect() {
+        INTERNAL_REDIRECT.remove();
     }
 
     public static boolean redirectPlayer(ServerPlayer player) {
@@ -91,6 +107,15 @@ public final class ItemRedirectService {
             ItemStack restored = restore(stack, level, level.dimension().location(), false);
             if (restored != null) {
                 itemEntity.setItem(restored);
+                itemEntity.lifespan = DEFAULT_ITEM_LIFESPAN;
+                itemEntity.setInvulnerable(false);
+                return true;
+            }
+            ItemStack missing = missingMarker(stack, level);
+            if (missing != null) {
+                itemEntity.setItem(missing);
+                itemEntity.lifespan = DEFAULT_ITEM_LIFESPAN;
+                itemEntity.setInvulnerable(false);
                 return true;
             }
             return false;
@@ -137,6 +162,12 @@ public final class ItemRedirectService {
                 if (stack.isEmpty()) {
                     continue;
                 }
+                ItemStack missing = missingMarker(stack, store);
+                if (missing != null) {
+                    container.setItem(index, missing);
+                    containerChanged = true;
+                    continue;
+                }
                 ItemStack restored = restore(stack, store, dimension, bypassBans);
                 if (restored != null) {
                     container.setItem(index, restored);
@@ -170,7 +201,14 @@ public final class ItemRedirectService {
     ) {
         boolean changed = false;
         for (int index = 0; index < stacks.size(); index++) {
-            ItemStack restored = restore(stacks.get(index), store, dimension, bypassBans);
+            ItemStack stack = stacks.get(index);
+            ItemStack missing = missingMarker(stack, store);
+            if (missing != null) {
+                stacks.set(index, missing);
+                changed = true;
+                continue;
+            }
+            ItemStack restored = restore(stack, store, dimension, bypassBans);
             if (restored != null) {
                 stacks.set(index, restored);
                 changed = true;
@@ -206,5 +244,19 @@ public final class ItemRedirectService {
         }
         ItemStack restored = store.remove(id);
         return restored.isEmpty() ? null : restored;
+    }
+
+    private static ItemStack missingMarker(ItemStack stack, ServerLevel level) {
+        return missingMarker(stack, ItemSnapshotStore.get(level));
+    }
+
+    private static ItemStack missingMarker(ItemStack stack, ItemSnapshotStore store) {
+        if (!isMarker(stack)) {
+            return null;
+        }
+        UUID id = BannedItemMarkerItem.snapshotId(stack);
+        return id != null && !store.contains(id)
+            ? BannedItemMarkerItem.withMissingSnapshot(id)
+            : null;
     }
 }

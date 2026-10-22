@@ -14,6 +14,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 public final class ItemSnapshotStore extends SavedData {
     private static final String DATA_NAME = "bandream_item_snapshots";
     private final Map<UUID, ItemStack> items = new HashMap<>();
+    private int loadFailures;
 
     public static ItemSnapshotStore get(ServerLevel level) {
         ServerLevel storageLevel = level.getServer().overworld();
@@ -51,6 +52,20 @@ public final class ItemSnapshotStore extends SavedData {
         return !items.isEmpty();
     }
 
+    public int size() {
+        return items.size();
+    }
+
+    public Map<UUID, ItemStack> entries() {
+        Map<UUID, ItemStack> snapshot = new HashMap<>();
+        items.forEach((id, stack) -> snapshot.put(id, stack.copy()));
+        return Map.copyOf(snapshot);
+    }
+
+    public int loadFailures() {
+        return loadFailures;
+    }
+
     @Override
     public CompoundTag save(CompoundTag tag) {
         ListTag entries = new ListTag();
@@ -70,6 +85,7 @@ public final class ItemSnapshotStore extends SavedData {
         for (int index = 0; index < entries.size(); index++) {
             CompoundTag entry = entries.getCompound(index);
             if (!entry.hasUUID("id") || !entry.contains("stack", Tag.TAG_COMPOUND)) {
+                data.loadFailures++;
                 continue;
             }
             try {
@@ -77,7 +93,8 @@ public final class ItemSnapshotStore extends SavedData {
                 if (!stack.isEmpty()) {
                     data.items.put(entry.getUUID("id"), stack);
                 }
-            } catch (RuntimeException ignored) {
+            } catch (RuntimeException exception) {
+                data.loadFailures++;
             }
         }
         return data;

@@ -24,7 +24,7 @@ public final class PlayerWhitelistEntry {
             try {
                 uuid = UUID.fromString(uuid.trim()).toString();
             } catch (IllegalArgumentException ignored) {
-                uuid = null;
+                return false;
             }
         }
         return name != null && !name.isBlank() || uuid != null;

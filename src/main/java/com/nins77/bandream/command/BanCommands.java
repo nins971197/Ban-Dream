@@ -61,6 +61,7 @@ public final class BanCommands {
         root.then(banRoot());
         root.then(unbanRoot());
         root.then(listRoot());
+        root.then(SnapshotCommands.node());
         root.then(WhitelistCommands.node());
         root.then(Commands.literal("stick").executes(BanCommands::giveBanStick));
         root.then(Commands.literal("reload").executes(BanCommands::reload));

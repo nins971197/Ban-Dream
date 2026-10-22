@@ -16,6 +16,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 public final class BakabanSnapshotStore extends SavedData {
     private static final String DATA_NAME = "bandream_bakaban_snapshots";
     private final Map<UUID, StoredBlock> blocks = new HashMap<>();
+    private int loadFailures;
 
     public static BakabanSnapshotStore get(ServerLevel level) {
         ServerLevel storageLevel = level.getServer().overworld();
@@ -48,6 +49,18 @@ public final class BakabanSnapshotStore extends SavedData {
         return !blocks.isEmpty();
     }
 
+    public int size() {
+        return blocks.size();
+    }
+
+    public Map<UUID, StoredBlock> entries() {
+        return Map.copyOf(blocks);
+    }
+
+    public int loadFailures() {
+        return loadFailures;
+    }
+
     @Override
     public CompoundTag save(CompoundTag tag) {
         ListTag entries = new ListTag();
@@ -70,6 +83,7 @@ public final class BakabanSnapshotStore extends SavedData {
         for (int index = 0; index < entries.size(); index++) {
             CompoundTag entry = entries.getCompound(index);
             if (!entry.hasUUID("id") || !entry.contains("state", Tag.TAG_COMPOUND)) {
+                data.loadFailures++;
                 continue;
             }
             try {
@@ -83,7 +97,8 @@ public final class BakabanSnapshotStore extends SavedData {
                     ? entry.getCompound("entity").copy()
                     : null;
                 data.blocks.put(id, new StoredBlock(state, blockEntity));
-            } catch (RuntimeException ignored) {
+            } catch (RuntimeException exception) {
+                data.loadFailures++;
             }
         }
         return data;

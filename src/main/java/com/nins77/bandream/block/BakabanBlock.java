@@ -10,11 +10,16 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.BlockHitResult;
 
 public final class BakabanBlock extends BaseEntityBlock {
     public BakabanBlock() {
-        super(Properties.of().strength(1.2F).sound(SoundType.STONE));
+        super(Properties.of()
+            .strength(1.2F)
+            .explosionResistance(1200.0F)
+            .sound(SoundType.STONE)
+            .pushReaction(PushReaction.BLOCK));
     }
 
     @Override

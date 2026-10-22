@@ -23,14 +23,21 @@ public abstract class PlayerInventoryMixin {
             || !(player.level() instanceof ServerLevel level)) {
             return;
         }
+        if (!ItemRedirectService.beginInternalRedirect()) {
+            return;
+        }
         ItemStack marker = ItemRedirectService.redirect(stack, level);
-        if (marker != null) {
-            if (inventory.add(slot, marker)) {
-                stack.setCount(0);
-                callback.setReturnValue(true);
-            } else {
-                ItemRedirectService.discardSnapshot(marker, level);
+        try {
+            if (marker != null) {
+                if (inventory.add(slot, marker)) {
+                    stack.setCount(0);
+                    callback.setReturnValue(true);
+                } else {
+                    ItemRedirectService.discardSnapshot(marker, level);
+                }
             }
+        } finally {
+            ItemRedirectService.endInternalRedirect();
         }
     }
 
@@ -45,11 +52,18 @@ public abstract class PlayerInventoryMixin {
             || !(player.level() instanceof ServerLevel level)) {
             return;
         }
+        if (!ItemRedirectService.beginInternalRedirect()) {
+            return;
+        }
         ItemStack marker = ItemRedirectService.redirect(stack, level);
-        if (marker != null) {
-            stack.setCount(0);
-            inventory.setItem(slot, marker);
-            callback.cancel();
+        try {
+            if (marker != null) {
+                stack.setCount(0);
+                inventory.setItem(slot, marker);
+                callback.cancel();
+            }
+        } finally {
+            ItemRedirectService.endInternalRedirect();
         }
     }
 }

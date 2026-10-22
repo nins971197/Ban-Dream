@@ -30,7 +30,7 @@ public final class BlockBanEvents {
         }
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGH)
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onPlace(BlockEvent.EntityPlaceEvent event) {
         if (!BanRules.hasBlockRules() || event.getLevel().isClientSide()
             || !(event.getLevel() instanceof ServerLevel level)) {

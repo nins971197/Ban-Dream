@@ -20,6 +20,10 @@ public final class BakabanService {
     }
 
     public static boolean redirect(ServerLevel level, BlockPos pos) {
+        return redirect(level, pos, Block.UPDATE_ALL);
+    }
+
+    public static boolean redirect(ServerLevel level, BlockPos pos, int updateFlags) {
         if (!BanRules.hasBlockRules()) {
             return false;
         }
@@ -33,7 +37,7 @@ public final class BakabanService {
         BlockEntity existing = level.getBlockEntity(pos);
         if (existing != null) {
             try {
-                blockEntity = existing.saveWithFullMetadata();
+                blockEntity = existing.saveWithoutMetadata();
             } catch (RuntimeException ignored) {
                 return false;
             }
@@ -41,7 +45,8 @@ public final class BakabanService {
 
         BakabanSnapshotStore store = BakabanSnapshotStore.get(level);
         UUID snapshotId = store.put(original, blockEntity);
-        if (!setBlockSuppressingDrops(level, pos, BanBlocks.BAKABAN.get().defaultBlockState())) {
+        if (!setBlockSuppressingDrops(
+            level, pos, BanBlocks.BAKABAN.get().defaultBlockState(), updateFlags)) {
             store.remove(snapshotId);
             return false;
         }
@@ -49,13 +54,17 @@ public final class BakabanService {
             marker.setSnapshotId(snapshotId);
             return true;
         }
-        setBlockSuppressingDrops(level, pos, original);
+        setBlockSuppressingDrops(level, pos, original, updateFlags);
         store.remove(snapshotId);
         restoreBlockEntity(level, pos, blockEntity);
         return false;
     }
 
     public static boolean restore(ServerLevel level, BlockPos pos) {
+        return restore(level, pos, Block.UPDATE_ALL);
+    }
+
+    public static boolean restore(ServerLevel level, BlockPos pos, int updateFlags) {
         if (!(level.getBlockEntity(pos) instanceof BakabanBlockEntity marker) || marker.snapshotId() == null) {
             return false;
         }
@@ -66,11 +75,12 @@ public final class BakabanService {
             || BanRules.isBlockBanned(stored.state().getBlock(), level.dimension().location())) {
             return false;
         }
-        if (!setBlockSuppressingDrops(level, pos, stored.state())) {
+        if (!setBlockSuppressingDrops(level, pos, stored.state(), updateFlags)) {
             return false;
         }
         if (!restoreBlockEntity(level, pos, stored.blockEntity())) {
-            setBlockSuppressingDrops(level, pos, BanBlocks.BAKABAN.get().defaultBlockState());
+            setBlockSuppressingDrops(
+                level, pos, BanBlocks.BAKABAN.get().defaultBlockState(), updateFlags);
             if (level.getBlockEntity(pos) instanceof BakabanBlockEntity replacement) {
                 replacement.setSnapshotId(snapshotId);
             }
@@ -108,13 +118,18 @@ public final class BakabanService {
         return suppressingContainerDrops && !level.isClientSide();
     }
 
-    private static boolean setBlockSuppressingDrops(ServerLevel level, BlockPos pos, BlockState state) {
+    private static boolean setBlockSuppressingDrops(
+        ServerLevel level,
+        BlockPos pos,
+        BlockState state,
+        int updateFlags
+    ) {
         boolean previous = suppressingContainerDrops;
         boolean previousMarker = suppressingMarkerDrops;
         suppressingContainerDrops = true;
         suppressingMarkerDrops = true;
         try {
-            return level.setBlock(pos, state, Block.UPDATE_ALL);
+            return level.setBlock(pos, state, updateFlags);
         } finally {
             suppressingContainerDrops = previous;
             suppressingMarkerDrops = previousMarker;
@@ -130,7 +145,12 @@ public final class BakabanService {
             return false;
         }
         try {
-            blockEntity.load(data.copy());
+            CompoundTag content = data.copy();
+            content.remove("id");
+            content.remove("x");
+            content.remove("y");
+            content.remove("z");
+            blockEntity.load(content);
             blockEntity.setChanged();
             return true;
         } catch (RuntimeException ignored) {

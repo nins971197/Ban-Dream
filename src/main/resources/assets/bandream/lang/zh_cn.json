@@ -12,6 +12,7 @@
   "block.bandream.bakaban": "已限制方块",
   "item.bandream.ban_stick": "封禁棒",
   "item.bandream.999ban": "999ban",
+  "item.bandream.999ban.missing": "999ban（封存数据丢失）",
   "item.bandream.ban_stick.tooltip1": "左键方块/生物：打开封禁选项",
   "item.bandream.ban_stick.tooltip2": "潜行左键木桶：封禁桶内全部物品",
   "item.bandream.ban_stick.tooltip3": "右键方块/生物：确认全局解封；潜行右键木桶：一键解封桶内物品",

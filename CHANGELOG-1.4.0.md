@@ -20,6 +20,14 @@
 - Right-clicking a block or mob opens a bottom-right global unban confirmation.
 - Sneak right-clicking a barrel globally unbans all contained item IDs immediately.
 - Item and block list entries now open a management panel for bans or unbans.
+- Added snapshot audit commands for item/block listing, inspection, deletion and orphan candidates.
+- Fixed `LevelChunkTickerMixin` to inject into `LevelChunk.updateBlockEntityTicker` instead of shadowing a synthetic wrapper field.
+- Restored item entities now lose marker-only unlimited lifetime and invulnerability.
+- Block entity snapshots strip old `id`, `x`, `y`, and `z` metadata before loading at a new position.
+- Block and item marker copies without a backing snapshot are labeled as missing instead of silently becoming empty markers.
+- Block scanner budgets are shared globally and include a two-millisecond per-tick time cap.
+- Block scanner replacements use client-only update flags to avoid full neighbor-update amplification.
+- Rule loading now rejects malformed or duplicate rules and keeps the previous valid index.
 - Added optional Curios support for redirecting and restoring banned equipped items.
 - Restricted list entry management to left-click and closed the old list container first.
 - Preserved JEI visibility when changing an item ban mode.

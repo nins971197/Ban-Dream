@@ -94,8 +94,6 @@ public final class BanRules {
     }
 
     public static synchronized void load() throws IOException {
-        PATH_CACHE.clear();
-        VALUE_CACHE.clear();
         Files.createDirectories(CONFIG_PATH.getParent());
         if (Files.notExists(CONFIG_PATH)) {
             writeConfig(List.of(), List.of());
@@ -114,6 +112,8 @@ public final class BanRules {
 
         List<BanEntry> bans = normalizeBans(file.bans);
         List<PlayerWhitelistEntry> players = normalizePlayers(file.playerWhitelist);
+        PATH_CACHE.clear();
+        VALUE_CACHE.clear();
         setRules(bans, players);
     }
 
@@ -246,40 +246,67 @@ public final class BanRules {
         return copy;
     }
 
-    private static List<BanEntry> normalizeBans(List<BanEntry> source) {
+    private static List<BanEntry> normalizeBans(List<BanEntry> source) throws IOException {
         if (source == null) {
             return List.of();
         }
         List<BanEntry> result = new ArrayList<>();
         Set<RuleKey> keys = new HashSet<>();
-        for (BanEntry entry : source) {
+        List<String> errors = new ArrayList<>();
+        for (int index = 0; index < source.size(); index++) {
+            BanEntry entry = source.get(index);
             if (entry == null || !entry.normalize()) {
+                errors.add("bans[" + index + "]: invalid rule");
                 continue;
             }
-            if (keys.add(key(entry))) {
-                result.add(entry);
+            if (!keys.add(key(entry))) {
+                errors.add("bans[" + index + "]: duplicate rule " + entry.type.id() + " " + entry.id);
+                continue;
             }
+            result.add(entry);
+        }
+        if (!errors.isEmpty()) {
+            throw invalidConfig(errors);
         }
         result.sort(ORDER);
         return result;
     }
 
-    private static List<PlayerWhitelistEntry> normalizePlayers(List<PlayerWhitelistEntry> source) {
+    private static List<PlayerWhitelistEntry> normalizePlayers(
+        List<PlayerWhitelistEntry> source
+    ) throws IOException {
         if (source == null) {
             return List.of();
         }
         List<PlayerWhitelistEntry> result = new ArrayList<>();
-        for (PlayerWhitelistEntry entry : source) {
+        List<String> errors = new ArrayList<>();
+        for (int index = 0; index < source.size(); index++) {
+            PlayerWhitelistEntry entry = source.get(index);
             if (entry == null || !entry.normalize()) {
+                errors.add("playerWhitelist[" + index + "]: invalid entry");
                 continue;
             }
-            if (result.stream().noneMatch(entry::sameIdentity)) {
-                result.add(entry);
+            if (result.stream().anyMatch(entry::sameIdentity)) {
+                errors.add("playerWhitelist[" + index + "]: duplicate player " + entry.display());
+                continue;
             }
+            result.add(entry);
+        }
+        if (!errors.isEmpty()) {
+            throw invalidConfig(errors);
         }
         result.sort(Comparator.comparing(PlayerWhitelistEntry::nameKey)
             .thenComparing(entry -> entry.uuid == null ? "" : entry.uuid));
         return result;
+    }
+
+    private static IOException invalidConfig(List<String> errors) {
+        int shown = Math.min(errors.size(), 8);
+        String detail = String.join("; ", errors.subList(0, shown));
+        if (errors.size() > shown) {
+            detail += "; and " + (errors.size() - shown) + " more";
+        }
+        return new IOException("Invalid Ban Dream config: " + detail);
     }
 
     private static void setRules(List<BanEntry> bans, List<PlayerWhitelistEntry> players) {

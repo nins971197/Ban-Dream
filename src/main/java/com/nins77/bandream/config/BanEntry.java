@@ -55,8 +55,7 @@ public final class BanEntry {
         } else if (scope == BanScope.DIMENSION) {
             ResourceLocation parsedDimension = ResourceLocation.tryParse(dimension == null ? "" : dimension);
             if (parsedDimension == null) {
-                scope = BanScope.GLOBAL;
-                dimension = null;
+                return false;
             } else {
                 dimension = parsedDimension.toString();
             }

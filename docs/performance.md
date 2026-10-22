@@ -46,6 +46,7 @@ rule count, NBT rules, modded pipes, entity count and chunk load.
 | Block bans, 10,000 loaded hoppers | roughly 1-5 ms per tick |
 | Block behavior checks | one rule lookup per relevant tick or update |
 | Curios checks, 100 players | only on curio changes or enchantment refresh |
+| Block scanner | global 8,192-cell, 128-redirect and 2 ms per-tick cap |
 
 Player inventory insertion is checked only when a stack is inserted or a slot is written.
 Item use is still checked at `ItemStack` interaction and callback entry points as a

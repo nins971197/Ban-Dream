@@ -74,9 +74,12 @@ broken and placed elsewhere; restoration uses the marker's current position.
 
 `BakabanScanner` scans loaded chunks for banned blocks and existing markers. On unban it
 restores markers at their current positions and leaves unloaded chunks queued for their
-next load. `ServerPlayerGameModeMixin` blocks right-click use, while destruction and
-placement remain allowed. `LevelChunkTickerMixin`, `LevelMixin`, and `ServerLevelMixin`
-continue to suppress internal block behavior before a marker is created.
+next load. Scanner work is shared across dimensions and capped by a two-millisecond
+per-tick time budget in addition to cell and redirect limits. `ServerPlayerGameModeMixin`
+blocks right-click use, while destruction and placement remain allowed.
+`LevelChunkTickerMixin` prevents banned block entities from registering a ticker;
+`LevelMixin` and `ServerLevelMixin` continue to suppress scheduled, random and fluid
+behavior before a marker is created.
 
 Item movement is blocked at three layers:
 
