@@ -90,6 +90,11 @@ public final class BakabanService {
             return false;
         }
         if (!store.delete(snapshotId)) {
+            setBlockSuppressingDrops(
+                level, pos, BanBlocks.BAKABAN.get().defaultBlockState(), updateFlags);
+            if (level.getBlockEntity(pos) instanceof BakabanBlockEntity replacement) {
+                replacement.setSnapshotId(snapshotId);
+            }
             return false;
         }
         return true;

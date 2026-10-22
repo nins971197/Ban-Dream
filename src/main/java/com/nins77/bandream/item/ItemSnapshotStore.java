@@ -22,6 +22,7 @@ public final class ItemSnapshotStore extends SavedData {
     private final Path directory;
     private final Set<UUID> ids = new HashSet<>();
     private int loadFailures;
+    private int writeFailures;
 
     public ItemSnapshotStore(Path directory) {
         this.directory = directory;
@@ -43,6 +44,7 @@ public final class ItemSnapshotStore extends SavedData {
         entry.putUUID("id", id);
         entry.put("stack", stack.copy().save(new CompoundTag()));
         if (!SnapshotFiles.write(directory, id, entry)) {
+            writeFailures++;
             return null;
         }
         ids.add(id);
@@ -114,6 +116,10 @@ public final class ItemSnapshotStore extends SavedData {
 
     public int loadFailures() {
         return loadFailures;
+    }
+
+    public int writeFailures() {
+        return writeFailures;
     }
 
     public Map<UUID, ItemStack> entries() {

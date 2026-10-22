@@ -67,7 +67,10 @@ public final class BakabanScanner {
             if (!shouldScan(level)) {
                 continue;
             }
+            Set<Long> loaded = LOADED_CHUNKS.computeIfAbsent(
+                level.dimension(), ignored -> new HashSet<>());
             for (long key : level.getForcedChunks()) {
+                loaded.add(key);
                 enqueue(level.dimension(), key);
             }
             ChunkPos spawn = new ChunkPos(level.getSharedSpawnPos());
@@ -76,15 +79,14 @@ public final class BakabanScanner {
                     int chunkX = spawn.x + x;
                     int chunkZ = spawn.z + z;
                     if (level.getChunkSource().getChunkNow(chunkX, chunkZ) != null) {
-                        enqueue(level.dimension(), ChunkPos.asLong(chunkX, chunkZ));
+                        long key = ChunkPos.asLong(chunkX, chunkZ);
+                        loaded.add(key);
+                        enqueue(level.dimension(), key);
                     }
                 }
             }
-            Set<Long> loaded = LOADED_CHUNKS.get(level.dimension());
-            if (loaded != null) {
-                for (long key : loaded) {
-                    enqueue(level.dimension(), key);
-                }
+            for (long key : loaded) {
+                enqueue(level.dimension(), key);
             }
         }
     }

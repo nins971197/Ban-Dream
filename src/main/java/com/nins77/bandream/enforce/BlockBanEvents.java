@@ -39,7 +39,10 @@ public final class BlockBanEvents {
         }
         if (BanRules.isBlockBanned(event.getPlacedBlock().getBlock(),
             level.dimension().location())) {
-            BakabanService.redirect(level, event.getPos(), Block.UPDATE_CLIENTS);
+            if (!BakabanService.redirect(level, event.getPos(), Block.UPDATE_CLIENTS)
+                && event.getEntity() instanceof ServerPlayer player) {
+                BanEnforcement.notify(player, "方块封存写入失败，请检查磁盘空间和权限");
+            }
         }
     }
 

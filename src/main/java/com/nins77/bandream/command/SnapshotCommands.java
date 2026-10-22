@@ -82,8 +82,10 @@ final class SnapshotCommands {
             .sorted((left, right) -> left.toString().compareTo(right.toString()))
             .toList();
         header(source, "物品快照", entries.size(), page, ids.size());
-        source.sendSystemMessage(Component.literal("读取失败条目: "
-            + ItemSnapshotStore.get(level).loadFailures()).withStyle(ChatFormatting.DARK_GRAY));
+        source.sendSystemMessage(Component.literal("读取失败: "
+            + ItemSnapshotStore.get(level).loadFailures()
+            + " | 写入失败: " + ItemSnapshotStore.get(level).writeFailures())
+            .withStyle(ChatFormatting.DARK_GRAY));
         for (UUID id : page(ids, page)) {
             ItemStack stack = entries.get(id);
             source.sendSystemMessage(Component.literal(id + " | "
@@ -101,8 +103,10 @@ final class SnapshotCommands {
             .sorted((left, right) -> left.toString().compareTo(right.toString()))
             .toList();
         header(source, "方块快照", entries.size(), page, ids.size());
-        source.sendSystemMessage(Component.literal("读取失败条目: "
-            + BakabanSnapshotStore.get(level).loadFailures()).withStyle(ChatFormatting.DARK_GRAY));
+        source.sendSystemMessage(Component.literal("读取失败: "
+            + BakabanSnapshotStore.get(level).loadFailures()
+            + " | 写入失败: " + BakabanSnapshotStore.get(level).writeFailures())
+            .withStyle(ChatFormatting.DARK_GRAY));
         for (UUID id : page(ids, page)) {
             BakabanSnapshotStore.StoredBlock stored = entries.get(id);
             source.sendSystemMessage(Component.literal(id + " | "
@@ -153,12 +157,12 @@ final class SnapshotCommands {
         if (id == null) {
             return 0;
         }
-        ItemStack removed = ItemSnapshotStore.get(source.getServer().overworld()).remove(id);
-        source.sendSystemMessage(Component.literal(removed.isEmpty()
+        boolean removed = ItemSnapshotStore.get(source.getServer().overworld()).delete(id);
+        source.sendSystemMessage(Component.literal(!removed
             ? "没有该物品快照"
-            : "已删除物品快照 " + id).withStyle(removed.isEmpty()
+            : "已删除物品快照 " + id).withStyle(!removed
                 ? ChatFormatting.RED : ChatFormatting.YELLOW));
-        return removed.isEmpty() ? 0 : 1;
+        return removed ? 1 : 0;
     }
 
     private static int deleteBlock(CommandSourceStack source, CommandContext<CommandSourceStack> context) {
@@ -166,7 +170,7 @@ final class SnapshotCommands {
         if (id == null) {
             return 0;
         }
-        boolean removed = BakabanSnapshotStore.get(source.getServer().overworld()).remove(id) != null;
+        boolean removed = BakabanSnapshotStore.get(source.getServer().overworld()).delete(id);
         source.sendSystemMessage(Component.literal(removed
             ? "已删除方块快照 " + id
             : "没有该方块快照").withStyle(removed ? ChatFormatting.YELLOW : ChatFormatting.RED));

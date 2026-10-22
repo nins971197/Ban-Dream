@@ -25,6 +25,7 @@ public final class BakabanSnapshotStore extends SavedData {
     private final ServerLevel level;
     private final Set<UUID> ids = new HashSet<>();
     private int loadFailures;
+    private int writeFailures;
 
     public BakabanSnapshotStore(Path directory, ServerLevel level) {
         this.directory = directory;
@@ -50,6 +51,7 @@ public final class BakabanSnapshotStore extends SavedData {
             entry.put("entity", blockEntity.copy());
         }
         if (!SnapshotFiles.write(directory, id, entry)) {
+            writeFailures++;
             return null;
         }
         ids.add(id);
@@ -121,6 +123,10 @@ public final class BakabanSnapshotStore extends SavedData {
 
     public int loadFailures() {
         return loadFailures;
+    }
+
+    public int writeFailures() {
+        return writeFailures;
     }
 
     public Map<UUID, StoredBlock> entries() {

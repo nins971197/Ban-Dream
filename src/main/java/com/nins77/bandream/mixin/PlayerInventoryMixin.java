@@ -1,6 +1,8 @@
 package com.nins77.bandream.mixin;
 
 import com.nins77.bandream.item.ItemRedirectService;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -26,6 +28,7 @@ public abstract class PlayerInventoryMixin {
         if (!ItemRedirectService.beginInternalRedirect()) {
             return;
         }
+        ItemRedirectService.clearWriteFailure();
         ItemStack marker = ItemRedirectService.redirect(stack, level);
         try {
             if (marker != null) {
@@ -38,6 +41,10 @@ public abstract class PlayerInventoryMixin {
             }
         } finally {
             ItemRedirectService.endInternalRedirect();
+        }
+        if (ItemRedirectService.consumeWriteFailure()) {
+            player.displayClientMessage(Component.literal("封存写入失败，请检查磁盘空间和权限")
+                .withStyle(ChatFormatting.RED), true);
         }
     }
 
@@ -55,6 +62,7 @@ public abstract class PlayerInventoryMixin {
         if (!ItemRedirectService.beginInternalRedirect()) {
             return;
         }
+        ItemRedirectService.clearWriteFailure();
         ItemStack marker = ItemRedirectService.redirect(stack, level);
         try {
             if (marker != null) {
@@ -64,6 +72,10 @@ public abstract class PlayerInventoryMixin {
             }
         } finally {
             ItemRedirectService.endInternalRedirect();
+        }
+        if (ItemRedirectService.consumeWriteFailure()) {
+            player.displayClientMessage(Component.literal("封存写入失败，请检查磁盘空间和权限")
+                .withStyle(ChatFormatting.RED), true);
         }
     }
 }

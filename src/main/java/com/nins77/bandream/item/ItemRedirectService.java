@@ -2,11 +2,15 @@ package com.nins77.bandream.item;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.nins77.bandream.config.BanRules;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.NonNullList;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,6 +23,8 @@ import net.minecraft.world.item.ItemStack;
 public final class ItemRedirectService {
     private static final int DEFAULT_ITEM_LIFESPAN = 6000;
     private static final ThreadLocal<Boolean> INTERNAL_REDIRECT = ThreadLocal.withInitial(() -> false);
+    private static final ThreadLocal<Boolean> WRITE_FAILED = ThreadLocal.withInitial(() -> false);
+    private static final Map<UUID, Long> LAST_WRITE_WARNING = new ConcurrentHashMap<>();
 
     private ItemRedirectService() {
     }
@@ -30,7 +36,11 @@ public final class ItemRedirectService {
         }
         ItemSnapshotStore store = ItemSnapshotStore.get(level);
         UUID id = store.put(source);
-        return id == null ? null : BannedItemMarkerItem.withSnapshot(id);
+        if (id == null) {
+            WRITE_FAILED.set(true);
+            return null;
+        }
+        return BannedItemMarkerItem.withSnapshot(id);
     }
 
     public static void discardSnapshot(ItemStack marker, ServerLevel level) {
@@ -80,7 +90,18 @@ public final class ItemRedirectService {
         INTERNAL_REDIRECT.remove();
     }
 
+    public static void clearWriteFailure() {
+        WRITE_FAILED.set(false);
+    }
+
+    public static boolean consumeWriteFailure() {
+        boolean failed = WRITE_FAILED.get();
+        WRITE_FAILED.remove();
+        return failed;
+    }
+
     public static boolean redirectPlayer(ServerPlayer player) {
+        clearWriteFailure();
         ServerLevel level = (ServerLevel) player.level();
         boolean changed = redirectList(player.getInventory().items, level);
         changed |= redirectList(player.getInventory().armor, level);
@@ -95,6 +116,9 @@ public final class ItemRedirectService {
         }
         if (changed) {
             player.getInventory().setChanged();
+        }
+        if (consumeWriteFailure()) {
+            notifyWriteFailure(player);
         }
         return changed;
     }
@@ -143,6 +167,7 @@ public final class ItemRedirectService {
         AbstractContainerMenu menu,
         boolean redirectBans
     ) {
+        clearWriteFailure();
         if (!(player.level() instanceof ServerLevel level)) {
             return false;
         }
@@ -189,6 +214,9 @@ public final class ItemRedirectService {
         }
         if (changed) {
             menu.broadcastChanges();
+        }
+        if (consumeWriteFailure()) {
+            notifyWriteFailure(player);
         }
         return changed;
     }
@@ -257,5 +285,14 @@ public final class ItemRedirectService {
         return id != null && !store.contains(id)
             ? BannedItemMarkerItem.withMissingSnapshot(id)
             : null;
+    }
+
+    private static void notifyWriteFailure(ServerPlayer player) {
+        long now = System.currentTimeMillis();
+        Long previous = LAST_WRITE_WARNING.put(player.getUUID(), now);
+        if (previous == null || now - previous >= 5000L) {
+            player.displayClientMessage(Component.literal("封存写入失败，请检查磁盘空间和权限")
+                .withStyle(ChatFormatting.RED), true);
+        }
     }
 }

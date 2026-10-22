@@ -7,6 +7,10 @@
 - Banned items are replaced by UUID-backed `999ban` markers; banned block markers use the `bakaban` model.
 - Item snapshots preserve the original ItemStack, count, item ID and NBT through bans, restarts and unbans.
 - Item and block snapshot payloads now use UUID-named files with an index-only SavedData store.
+- Corrupt snapshot files can now be deleted directly through the snapshot audit commands.
+- Snapshot write failures are counted and surfaced through audit output and throttled player feedback.
+- Failed snapshot index deletion rolls the restored block back to its marker to avoid orphan files.
+- Spawn-area scan references are registered as loaded chunks so orphan audits do not misclassify them.
 - Banned blocks allow destruction and placement while disabling right-click use, block/entity ticks, neighbor updates, random ticks and fluid ticks.
 - Block-entity tick suppression uses the chunk ticker wrapper to coexist with other mods that redirect `Level.tickBlockEntities`.
 - Dimension scope is now restricted to entities; old non-entity dimension rules normalize to global.
