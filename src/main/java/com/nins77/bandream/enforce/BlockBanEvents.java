@@ -5,6 +5,7 @@ import com.nins77.bandream.config.BanRules;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
@@ -38,7 +39,7 @@ public final class BlockBanEvents {
         }
         if (BanRules.isBlockBanned(event.getPlacedBlock().getBlock(),
             level.dimension().location())) {
-            BakabanService.redirect(level, event.getPos());
+            BakabanService.redirect(level, event.getPos(), Block.UPDATE_CLIENTS);
         }
     }
 
