@@ -6,6 +6,7 @@
 - Block bans now replace the original block with a `bakaban` marker and preserve the original state and BlockEntity by UUID.
 - Banned items are replaced by UUID-backed `999ban` markers; banned block markers use the `bakaban` model.
 - Item snapshots preserve the original ItemStack, count, item ID and NBT through bans, restarts and unbans.
+- Item and block snapshot payloads now use UUID-named files with an index-only SavedData store.
 - Banned blocks allow destruction and placement while disabling right-click use, block/entity ticks, neighbor updates, random ticks and fluid ticks.
 - Block-entity tick suppression uses the chunk ticker wrapper to coexist with other mods that redirect `Level.tickBlockEntities`.
 - Dimension scope is now restricted to entities; old non-entity dimension rules normalize to global.

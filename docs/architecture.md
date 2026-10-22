@@ -49,9 +49,10 @@ Entity spawning and structure generation remain world-level rules.
 ## Item ban enforcement
 
 Item rules replace matching stacks with `999ban`. The complete original ItemStack is
-stored once by UUID in `bandream_item_snapshots` SavedData. A `999ban` stack stores only
-the UUID in its `SnapshotId` tag, so moving, dropping or storing the marker does not
-duplicate the original item data.
+stored by UUID as an individual compressed NBT file under
+`world/bandream/item_snapshots`. The `bandream_item_snapshots` SavedData keeps only the
+UUID index. A `999ban` stack stores only the UUID in its `SnapshotId` tag, so moving,
+dropping or storing the marker does not duplicate the original item data.
 
 `PlayerInventoryMixin` handles inventory insertion and slot writes. Player login,
 dimension changes, inventory events and rule changes restore valid markers and redirect
@@ -68,7 +69,8 @@ underlying snapshot.
 ## Block ban enforcement
 
 Block rules replace the original block with `bakaban`. The complete original BlockState
-and BlockEntity NBT are stored once in a global UUID-indexed snapshot store.
+and BlockEntity NBT are stored as individual compressed NBT files under
+`world/bandream/block_snapshots`; the global SavedData keeps only the UUID index.
 `BakabanBlockEntity` and dropped `bakaban` items store only the UUID. The marker may be
 broken and placed elsewhere; restoration uses the marker's current position.
 

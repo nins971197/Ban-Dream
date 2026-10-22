@@ -1,9 +1,14 @@
 package com.nins77.bandream.item;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
+import com.nins77.bandream.storage.SnapshotFiles;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -13,90 +18,142 @@ import net.minecraft.world.level.saveddata.SavedData;
 
 public final class ItemSnapshotStore extends SavedData {
     private static final String DATA_NAME = "bandream_item_snapshots";
-    private final Map<UUID, ItemStack> items = new HashMap<>();
+    private static final int FORMAT_VERSION = 2;
+    private final Path directory;
+    private final Set<UUID> ids = new HashSet<>();
     private int loadFailures;
+
+    public ItemSnapshotStore(Path directory) {
+        this.directory = directory;
+    }
 
     public static ItemSnapshotStore get(ServerLevel level) {
         ServerLevel storageLevel = level.getServer().overworld();
+        Path directory = SnapshotFiles.directory(level, "item_snapshots");
         return storageLevel.getDataStorage().computeIfAbsent(
-            ItemSnapshotStore::load,
-            ItemSnapshotStore::new,
+            tag -> load(tag, directory),
+            () -> new ItemSnapshotStore(directory),
             DATA_NAME);
     }
 
     public UUID put(ItemStack stack) {
         UUID id = UUID.randomUUID();
-        items.put(id, stack.copy());
+        CompoundTag entry = new CompoundTag();
+        entry.putInt("version", FORMAT_VERSION);
+        entry.putUUID("id", id);
+        entry.put("stack", stack.copy().save(new CompoundTag()));
+        if (!SnapshotFiles.write(directory, id, entry)) {
+            return null;
+        }
+        ids.add(id);
         setDirty();
         return id;
     }
 
     public ItemStack get(UUID id) {
-        ItemStack stack = items.get(id);
-        return stack == null ? ItemStack.EMPTY : stack.copy();
+        if (id == null || !ids.contains(id)) {
+            return ItemStack.EMPTY;
+        }
+        try {
+            CompoundTag entry = SnapshotFiles.read(directory, id);
+            if (entry == null || !entry.contains("stack", Tag.TAG_COMPOUND)) {
+                loadFailures++;
+                return ItemStack.EMPTY;
+            }
+            return ItemStack.of(entry.getCompound("stack"));
+        } catch (IOException | RuntimeException exception) {
+            loadFailures++;
+            return ItemStack.EMPTY;
+        }
     }
 
     public boolean contains(UUID id) {
-        return items.containsKey(id);
+        if (id == null || !ids.contains(id)) {
+            return false;
+        }
+        if (SnapshotFiles.exists(directory, id)) {
+            return true;
+        }
+        ids.remove(id);
+        loadFailures++;
+        setDirty();
+        return false;
     }
 
     public ItemStack remove(UUID id) {
-        ItemStack removed = items.remove(id);
-        if (removed != null) {
-            setDirty();
+        ItemStack stack = get(id);
+        if (stack.isEmpty() || !delete(id)) {
+            return ItemStack.EMPTY;
         }
-        return removed == null ? ItemStack.EMPTY : removed.copy();
+        return stack;
+    }
+
+    public boolean delete(UUID id) {
+        if (id == null) {
+            return false;
+        }
+        try {
+            boolean deleted = SnapshotFiles.delete(directory, id);
+            if (deleted) {
+                ids.remove(id);
+                setDirty();
+            }
+            return deleted;
+        } catch (IOException exception) {
+            return false;
+        }
     }
 
     public boolean hasSnapshots() {
-        return !items.isEmpty();
+        return !ids.isEmpty();
     }
 
     public int size() {
-        return items.size();
-    }
-
-    public Map<UUID, ItemStack> entries() {
-        Map<UUID, ItemStack> snapshot = new HashMap<>();
-        items.forEach((id, stack) -> snapshot.put(id, stack.copy()));
-        return Map.copyOf(snapshot);
+        return ids.size();
     }
 
     public int loadFailures() {
         return loadFailures;
     }
 
+    public Map<UUID, ItemStack> entries() {
+        Map<UUID, ItemStack> snapshot = new HashMap<>();
+        for (UUID id : ids) {
+            ItemStack stack = get(id);
+            if (!stack.isEmpty()) {
+                snapshot.put(id, stack);
+            }
+        }
+        return Map.copyOf(snapshot);
+    }
+
     @Override
     public CompoundTag save(CompoundTag tag) {
-        ListTag entries = new ListTag();
-        for (Map.Entry<UUID, ItemStack> entry : items.entrySet()) {
-            CompoundTag item = new CompoundTag();
-            item.putUUID("id", entry.getKey());
-            item.put("stack", entry.getValue().save(new CompoundTag()));
-            entries.add(item);
+        tag.putInt("version", FORMAT_VERSION);
+        ListTag list = new ListTag();
+        for (UUID id : ids) {
+            CompoundTag entry = new CompoundTag();
+            entry.putUUID("id", id);
+            list.add(entry);
         }
-        tag.put("items", entries);
+        tag.put("items", list);
         return tag;
     }
 
-    private static ItemSnapshotStore load(CompoundTag tag) {
-        ItemSnapshotStore data = new ItemSnapshotStore();
-        ListTag entries = tag.getList("items", Tag.TAG_COMPOUND);
-        for (int index = 0; index < entries.size(); index++) {
-            CompoundTag entry = entries.getCompound(index);
-            if (!entry.hasUUID("id") || !entry.contains("stack", Tag.TAG_COMPOUND)) {
-                data.loadFailures++;
-                continue;
-            }
-            try {
-                ItemStack stack = ItemStack.of(entry.getCompound("stack"));
-                if (!stack.isEmpty()) {
-                    data.items.put(entry.getUUID("id"), stack);
-                }
-            } catch (RuntimeException exception) {
+    private static ItemSnapshotStore load(CompoundTag tag, Path directory) {
+        ItemSnapshotStore data = new ItemSnapshotStore(directory);
+        Set<UUID> ids = new HashSet<>(SnapshotFiles.list(directory));
+        ListTag list = tag.getList("items", Tag.TAG_COMPOUND);
+        for (int index = 0; index < list.size(); index++) {
+            CompoundTag entry = list.getCompound(index);
+            if (entry.hasUUID("id")) {
+                ids.add(entry.getUUID("id"));
+            } else {
                 data.loadFailures++;
             }
         }
+        ids.removeIf(id -> !SnapshotFiles.exists(directory, id));
+        data.ids.addAll(ids);
         return data;
     }
 }

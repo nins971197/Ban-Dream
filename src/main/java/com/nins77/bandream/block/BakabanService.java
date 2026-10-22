@@ -45,9 +45,12 @@ public final class BakabanService {
 
         BakabanSnapshotStore store = BakabanSnapshotStore.get(level);
         UUID snapshotId = store.put(original, blockEntity);
+        if (snapshotId == null) {
+            return false;
+        }
         if (!setBlockSuppressingDrops(
             level, pos, BanBlocks.BAKABAN.get().defaultBlockState(), updateFlags)) {
-            store.remove(snapshotId);
+            store.delete(snapshotId);
             return false;
         }
         if (level.getBlockEntity(pos) instanceof BakabanBlockEntity marker) {
@@ -55,7 +58,7 @@ public final class BakabanService {
             return true;
         }
         setBlockSuppressingDrops(level, pos, original, updateFlags);
-        store.remove(snapshotId);
+        store.delete(snapshotId);
         restoreBlockEntity(level, pos, blockEntity);
         return false;
     }
@@ -86,7 +89,9 @@ public final class BakabanService {
             }
             return false;
         }
-        store.remove(snapshotId);
+        if (!store.delete(snapshotId)) {
+            return false;
+        }
         return true;
     }
 

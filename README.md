@@ -234,6 +234,8 @@ NBT 路径使用原版 NBT Path 语法，例如 `CustomModelData`、`display.Nam
 
 `snapshot orphaned` 只检查当前已加载的区块、掉落物、玩家背包和打开中的容器；快照删除命令只删除存档索引，不会自动生成新的物品或方块。
 
+1.4.0 使用 UUID 独立 NBT 文件加索引的新快照格式。当前版本不读取旧版整表快照存档。
+
 ### 重载配置
 
 ```text

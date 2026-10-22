@@ -30,7 +30,7 @@ public final class ItemRedirectService {
         }
         ItemSnapshotStore store = ItemSnapshotStore.get(level);
         UUID id = store.put(source);
-        return BannedItemMarkerItem.withSnapshot(id);
+        return id == null ? null : BannedItemMarkerItem.withSnapshot(id);
     }
 
     public static void discardSnapshot(ItemStack marker, ServerLevel level) {
@@ -242,8 +242,7 @@ public final class ItemRedirectService {
         if (original.isEmpty() || (!bypassBans && BanRules.isItemBanned(original, dimension))) {
             return null;
         }
-        ItemStack restored = store.remove(id);
-        return restored.isEmpty() ? null : restored;
+        return store.delete(id) ? original : null;
     }
 
     private static ItemStack missingMarker(ItemStack stack, ServerLevel level) {

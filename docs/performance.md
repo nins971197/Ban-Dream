@@ -11,7 +11,6 @@ Environment:
 - Forge 47.4.20 dedicated server
 - Development server, single-player test world, warm JVM
 - 20,000 warm-up calls and 1,000,000 measured rule queries per case
-- 10,000 item snapshots per redirect/restore case
 
 Measured costs on the development machine:
 
@@ -19,17 +18,14 @@ Measured costs on the development machine:
 | --- | ---: |
 | `BanRules.isItemBanned` with no item rules | 23 ns |
 | `BanRules.isItemBanned` with one global item rule | 20 ns |
-| `ItemRedirectService.redirect` with one global item rule | 3.35 us |
-| `ItemRedirectService.restore` from a saved marker | 1.63 us |
 
 These values cover rule lookup after ID and dimension caches are warm. They do not
 include the surrounding Minecraft inventory, chunk or capability work.
 
-The redirect benchmark retained 10,000 UUID snapshots in a fresh test run. The process
-heap grew by approximately 9.4 MB during snapshot creation, or roughly 0.94 KB per
-snapshot including the UUID, original ItemStack, marker list and map overhead. Snapshot
-memory therefore scales linearly with the number of live markers, not with the number
-of item IDs in the ban file.
+Snapshot payloads now use one compressed NBT file per UUID. Only the UUID index remains
+loaded in memory; original ItemStacks and block snapshots are read on demand. Write cost
+therefore depends primarily on storage latency rather than the total snapshot count.
+The earlier 10,000-snapshot in-memory benchmark no longer applies to this format.
 
 ## Estimated server load
 
@@ -41,7 +37,7 @@ rule count, NBT rules, modded pipes, entity count and chunk load.
 | No active item/block/entity rules, 100 players | one fast-path predicate per relevant event |
 | Item bans, 100 players, normal inventories | no periodic inventory scan |
 | Item bans with many NBT rules, 100 players | only inventory/event boundaries |
-| 10,000 retained item snapshots | roughly 9 MB heap |
+| 10,000 retained item snapshots | UUID index in memory; payload stored as separate files |
 | Block bans, 1,000 loaded hoppers | roughly 0.1-0.5 ms per tick |
 | Block bans, 10,000 loaded hoppers | roughly 1-5 ms per tick |
 | Block behavior checks | one rule lookup per relevant tick or update |
