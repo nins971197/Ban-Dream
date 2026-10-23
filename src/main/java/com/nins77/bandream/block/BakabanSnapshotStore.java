@@ -26,6 +26,7 @@ public final class BakabanSnapshotStore extends SavedData {
     private final Set<UUID> ids = new HashSet<>();
     private int loadFailures;
     private int writeFailures;
+    private int deleteFailures;
 
     public BakabanSnapshotStore(Path directory, ServerLevel level) {
         this.directory = directory;
@@ -102,13 +103,20 @@ public final class BakabanSnapshotStore extends SavedData {
             return false;
         }
         try {
+            if (!SnapshotFiles.exists(directory, id)) {
+                ids.remove(id);
+                return false;
+            }
             boolean deleted = SnapshotFiles.delete(directory, id);
             if (deleted) {
                 ids.remove(id);
                 setDirty();
+            } else {
+                deleteFailures++;
             }
             return deleted;
         } catch (IOException exception) {
+            deleteFailures++;
             return false;
         }
     }
@@ -127,6 +135,16 @@ public final class BakabanSnapshotStore extends SavedData {
 
     public int writeFailures() {
         return writeFailures;
+    }
+
+    public int deleteFailures() {
+        return deleteFailures;
+    }
+
+    public java.util.List<UUID> ids() {
+        return ids.stream()
+            .sorted((left, right) -> left.toString().compareTo(right.toString()))
+            .toList();
     }
 
     public Map<UUID, StoredBlock> entries() {
@@ -159,7 +177,9 @@ public final class BakabanSnapshotStore extends SavedData {
         ServerLevel level
     ) {
         BakabanSnapshotStore data = new BakabanSnapshotStore(directory, level);
-        Set<UUID> ids = new HashSet<>(SnapshotFiles.list(directory));
+        SnapshotFiles.ScanResult scan = SnapshotFiles.scan(directory);
+        data.loadFailures += scan.failures();
+        Set<UUID> ids = new HashSet<>(scan.ids());
         ListTag list = tag.getList("blocks", Tag.TAG_COMPOUND);
         for (int index = 0; index < list.size(); index++) {
             CompoundTag entry = list.getCompound(index);

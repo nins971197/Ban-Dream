@@ -16,6 +16,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.storage.LevelResource;
 
 public final class SnapshotFiles {
+    private static final ThreadLocal<Long> LAST_WRITE_NANOS = ThreadLocal.withInitial(() -> 0L);
+
     private SnapshotFiles() {
     }
 
@@ -26,6 +28,7 @@ public final class SnapshotFiles {
     }
 
     public static boolean write(Path directory, UUID id, CompoundTag tag) {
+        long started = System.nanoTime();
         Path target = directory.resolve(id + ".nbt");
         Path temporary = directory.resolve(id + ".tmp");
         try {
@@ -37,14 +40,22 @@ public final class SnapshotFiles {
             } catch (AtomicMoveNotSupportedException ignored) {
                 Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
             }
+            LAST_WRITE_NANOS.set(System.nanoTime() - started);
             return true;
         } catch (IOException exception) {
             try {
                 Files.deleteIfExists(temporary);
             } catch (IOException ignored) {
             }
+            LAST_WRITE_NANOS.set(System.nanoTime() - started);
             return false;
         }
+    }
+
+    public static long consumeLastWriteNanos() {
+        long elapsed = LAST_WRITE_NANOS.get();
+        LAST_WRITE_NANOS.remove();
+        return elapsed;
     }
 
     public static CompoundTag read(Path directory, UUID id) throws IOException {
@@ -60,10 +71,11 @@ public final class SnapshotFiles {
         return Files.isRegularFile(directory.resolve(id + ".nbt"));
     }
 
-    public static Set<UUID> list(Path directory) {
+    public static ScanResult scan(Path directory) {
         Set<UUID> ids = new HashSet<>();
+        int failures = 0;
         if (!Files.isDirectory(directory)) {
-            return ids;
+            return new ScanResult(ids, failures);
         }
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory, "*.nbt")) {
             for (Path path : stream) {
@@ -71,10 +83,15 @@ public final class SnapshotFiles {
                 try {
                     ids.add(UUID.fromString(file.substring(0, file.length() - 4)));
                 } catch (IllegalArgumentException ignored) {
+                    failures++;
                 }
             }
         } catch (IOException ignored) {
+            failures++;
         }
-        return ids;
+        return new ScanResult(ids, failures);
+    }
+
+    public record ScanResult(Set<UUID> ids, int failures) {
     }
 }

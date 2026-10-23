@@ -1,4 +1,4 @@
-# Ban Dream 1.4.0
+# Ban Dream 1.4.1
 
 - Added block bans with global scope; entity bans retain dimension scope.
 - Added `/bbban ban block`.
@@ -11,6 +11,10 @@
 - Snapshot write failures are counted and surfaced through audit output and throttled player feedback.
 - Failed snapshot index deletion rolls the restored block back to its marker to avoid orphan files.
 - Spawn-area scan references are registered as loaded chunks so orphan audits do not misclassify them.
+- Snapshot list pages now decode only the visible page and use overflow-safe page indexing.
+- Snapshot delete failures are distinguished from missing IDs and counted separately for items and blocks.
+- Snapshot directory scan failures are included in the audit load-failure count.
+- Block scanner storage time now contributes to the per-tick scan budget.
 - Banned blocks allow destruction and placement while disabling right-click use, block/entity ticks, neighbor updates, random ticks and fluid ticks.
 - Block-entity tick suppression uses the chunk ticker wrapper to coexist with other mods that redirect `Level.tickBlockEntities`.
 - Dimension scope is now restricted to entities; old non-entity dimension rules normalize to global.

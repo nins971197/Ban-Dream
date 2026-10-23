@@ -11,6 +11,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 import com.nins77.bandream.config.BanRules;
+import com.nins77.bandream.storage.SnapshotFiles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -233,6 +234,10 @@ public final class BakabanScanner {
                     if (BakabanService.redirect(level, pos, Block.UPDATE_CLIENTS)) {
                         budget.redirects++;
                     }
+                    budget.storageNanos += SnapshotFiles.consumeLastWriteNanos();
+                    if (budget.storageNanos >= MAX_SCAN_TIME_NANOS) {
+                        return false;
+                    }
                 }
             }
             scan.sectionIndex++;
@@ -269,6 +274,7 @@ public final class BakabanScanner {
         private final long deadline;
         private int cells;
         private int redirects;
+        private long storageNanos;
 
         private ScanBudget(long deadline) {
             this.deadline = deadline;

@@ -3,7 +3,6 @@ package com.nins77.bandream.command;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -77,43 +76,40 @@ final class SnapshotCommands {
 
     private static int listItems(CommandSourceStack source, int page) {
         ServerLevel level = source.getServer().overworld();
-        Map<UUID, ItemStack> entries = ItemSnapshotStore.get(level).entries();
-        List<UUID> ids = entries.keySet().stream()
-            .sorted((left, right) -> left.toString().compareTo(right.toString()))
-            .toList();
-        header(source, "物品快照", entries.size(), page, ids.size());
+        ItemSnapshotStore store = ItemSnapshotStore.get(level);
+        List<UUID> ids = store.ids();
+        int currentPage = clampPage(page, ids.size());
+        header(source, "物品快照", ids.size(), currentPage, ids.size());
         source.sendSystemMessage(Component.literal("读取失败: "
-            + ItemSnapshotStore.get(level).loadFailures()
-            + " | 写入失败: " + ItemSnapshotStore.get(level).writeFailures())
+            + store.loadFailures() + " | 写入失败: " + store.writeFailures()
+            + " | 删除失败: " + store.deleteFailures())
             .withStyle(ChatFormatting.DARK_GRAY));
-        for (UUID id : page(ids, page)) {
-            ItemStack stack = entries.get(id);
+        for (UUID id : page(ids, currentPage)) {
+            ItemStack stack = store.get(id);
             source.sendSystemMessage(Component.literal(id + " | "
                 + BanRules.itemId(stack.getItem()) + " x" + stack.getCount())
                 .withStyle(ChatFormatting.GRAY));
         }
-        return entries.size();
+        return ids.size();
     }
 
     private static int listBlocks(CommandSourceStack source, int page) {
         ServerLevel level = source.getServer().overworld();
-        Map<UUID, BakabanSnapshotStore.StoredBlock> entries =
-            BakabanSnapshotStore.get(level).entries();
-        List<UUID> ids = entries.keySet().stream()
-            .sorted((left, right) -> left.toString().compareTo(right.toString()))
-            .toList();
-        header(source, "方块快照", entries.size(), page, ids.size());
+        BakabanSnapshotStore store = BakabanSnapshotStore.get(level);
+        List<UUID> ids = store.ids();
+        int currentPage = clampPage(page, ids.size());
+        header(source, "方块快照", ids.size(), currentPage, ids.size());
         source.sendSystemMessage(Component.literal("读取失败: "
-            + BakabanSnapshotStore.get(level).loadFailures()
-            + " | 写入失败: " + BakabanSnapshotStore.get(level).writeFailures())
+            + store.loadFailures() + " | 写入失败: " + store.writeFailures()
+            + " | 删除失败: " + store.deleteFailures())
             .withStyle(ChatFormatting.DARK_GRAY));
-        for (UUID id : page(ids, page)) {
-            BakabanSnapshotStore.StoredBlock stored = entries.get(id);
+        for (UUID id : page(ids, currentPage)) {
+            BakabanSnapshotStore.StoredBlock stored = store.get(id);
             source.sendSystemMessage(Component.literal(id + " | "
                 + BanRules.blockId(stored.state().getBlock()))
                 .withStyle(ChatFormatting.GRAY));
         }
-        return entries.size();
+        return ids.size();
     }
 
     private static int inspectItem(CommandSourceStack source, CommandContext<CommandSourceStack> context) {
@@ -157,11 +153,14 @@ final class SnapshotCommands {
         if (id == null) {
             return 0;
         }
-        boolean removed = ItemSnapshotStore.get(source.getServer().overworld()).delete(id);
-        source.sendSystemMessage(Component.literal(!removed
-            ? "没有该物品快照"
-            : "已删除物品快照 " + id).withStyle(!removed
-                ? ChatFormatting.RED : ChatFormatting.YELLOW));
+        ItemSnapshotStore store = ItemSnapshotStore.get(source.getServer().overworld());
+        boolean existed = store.exists(id);
+        boolean removed = store.delete(id);
+        source.sendSystemMessage(Component.literal(removed
+            ? "已删除物品快照 " + id
+            : existed ? "删除物品快照失败，请检查文件权限" : "没有该物品快照")
+            .withStyle(removed || !existed
+                ? ChatFormatting.YELLOW : ChatFormatting.RED));
         return removed ? 1 : 0;
     }
 
@@ -170,10 +169,14 @@ final class SnapshotCommands {
         if (id == null) {
             return 0;
         }
-        boolean removed = BakabanSnapshotStore.get(source.getServer().overworld()).delete(id);
+        BakabanSnapshotStore store = BakabanSnapshotStore.get(source.getServer().overworld());
+        boolean existed = store.exists(id);
+        boolean removed = store.delete(id);
         source.sendSystemMessage(Component.literal(removed
             ? "已删除方块快照 " + id
-            : "没有该方块快照").withStyle(removed ? ChatFormatting.YELLOW : ChatFormatting.RED));
+            : existed ? "删除方块快照失败，请检查文件权限" : "没有该方块快照")
+            .withStyle(removed || !existed
+                ? ChatFormatting.YELLOW : ChatFormatting.RED));
         return removed ? 1 : 0;
     }
 
@@ -296,7 +299,6 @@ final class SnapshotCommands {
     private static UUID markerId(ItemStack stack) {
         return BannedItemMarkerItem.snapshotId(stack);
     }
-
     private static int orphaned(CommandSourceStack source) {
         MinecraftServer server = source.getServer();
         Set<UUID> itemIds = new HashSet<>();
@@ -321,9 +323,9 @@ final class SnapshotCommands {
                 }
             }
         }
-        reportOrphans(source, "物品", ItemSnapshotStore.get(server.overworld()).entries().keySet(), itemIds);
-        reportOrphans(source, "方块", BakabanSnapshotStore.get(server.overworld()).entries().keySet(), blockIds);
-        source.sendSystemMessage(Component.literal("仅统计当前加载范围；使用 snapshot delete 手动删除确认无效的快照")
+        reportOrphans(source, "物品", new HashSet<>(ItemSnapshotStore.get(server.overworld()).ids()), itemIds);
+        reportOrphans(source, "方块", new HashSet<>(BakabanSnapshotStore.get(server.overworld()).ids()), blockIds);
+        source.sendSystemMessage(Component.literal("这是当前加载范围的疑似列表，不代表全量审计；确认无效后再使用 snapshot delete")
             .withStyle(ChatFormatting.DARK_GRAY));
         return 1;
     }
@@ -359,13 +361,21 @@ final class SnapshotCommands {
     }
 
     private static List<UUID> page(List<UUID> ids, int page) {
-        int from = Math.min(ids.size(), (page - 1) * PAGE_SIZE);
+        long start = (long) (page - 1) * PAGE_SIZE;
+        if (start >= ids.size()) {
+            return List.of();
+        }
+        int from = (int) start;
         int to = Math.min(ids.size(), from + PAGE_SIZE);
         return ids.subList(from, to);
     }
 
     private static int pages(int size) {
         return Math.max(1, (size + PAGE_SIZE - 1) / PAGE_SIZE);
+    }
+
+    private static int clampPage(int page, int size) {
+        return Math.min(page, pages(size));
     }
 
     private static UUID uuid(CommandContext<CommandSourceStack> context) {

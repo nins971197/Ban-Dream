@@ -48,7 +48,7 @@ $env:JAVA_HOME = '你的 JDK 17 目录'
 .\gradlew.bat build
 ```
 
-产物位于 `build/libs/ban_dream-1.4.0.jar`。
+产物位于 `build/libs/ban_dream-1.4.1.jar`。
 
 Curios 使用 `5.10.0+1.20.1` 的 API 作为 `compileOnly` 依赖，运行时不要求安装。
 
@@ -236,7 +236,7 @@ NBT 路径使用原版 NBT Path 语法，例如 `CustomModelData`、`display.Nam
 
 快照列表会显示本会话的读取失败和写入失败数量。玩家背包或放置事件写入快照失败时会收到磁盘空间/权限提示。
 
-1.4.0 使用 UUID 独立 NBT 文件加索引的新快照格式。当前版本不读取旧版整表快照存档。
+1.4.x 使用 UUID 独立 NBT 文件加索引的新快照格式。当前版本不读取旧版整表快照存档。
 
 ### 重载配置
 

@@ -23,6 +23,7 @@ public final class ItemSnapshotStore extends SavedData {
     private final Set<UUID> ids = new HashSet<>();
     private int loadFailures;
     private int writeFailures;
+    private int deleteFailures;
 
     public ItemSnapshotStore(Path directory) {
         this.directory = directory;
@@ -82,6 +83,10 @@ public final class ItemSnapshotStore extends SavedData {
         return false;
     }
 
+    public boolean exists(UUID id) {
+        return id != null && ids.contains(id) && SnapshotFiles.exists(directory, id);
+    }
+
     public ItemStack remove(UUID id) {
         ItemStack stack = get(id);
         if (stack.isEmpty() || !delete(id)) {
@@ -95,13 +100,20 @@ public final class ItemSnapshotStore extends SavedData {
             return false;
         }
         try {
+            if (!SnapshotFiles.exists(directory, id)) {
+                ids.remove(id);
+                return false;
+            }
             boolean deleted = SnapshotFiles.delete(directory, id);
             if (deleted) {
                 ids.remove(id);
                 setDirty();
+            } else {
+                deleteFailures++;
             }
             return deleted;
         } catch (IOException exception) {
+            deleteFailures++;
             return false;
         }
     }
@@ -120,6 +132,16 @@ public final class ItemSnapshotStore extends SavedData {
 
     public int writeFailures() {
         return writeFailures;
+    }
+
+    public int deleteFailures() {
+        return deleteFailures;
+    }
+
+    public java.util.List<UUID> ids() {
+        return ids.stream()
+            .sorted((left, right) -> left.toString().compareTo(right.toString()))
+            .toList();
     }
 
     public Map<UUID, ItemStack> entries() {
@@ -148,7 +170,9 @@ public final class ItemSnapshotStore extends SavedData {
 
     private static ItemSnapshotStore load(CompoundTag tag, Path directory) {
         ItemSnapshotStore data = new ItemSnapshotStore(directory);
-        Set<UUID> ids = new HashSet<>(SnapshotFiles.list(directory));
+        SnapshotFiles.ScanResult scan = SnapshotFiles.scan(directory);
+        data.loadFailures += scan.failures();
+        Set<UUID> ids = new HashSet<>(scan.ids());
         ListTag list = tag.getList("items", Tag.TAG_COMPOUND);
         for (int index = 0; index < list.size(); index++) {
             CompoundTag entry = list.getCompound(index);
